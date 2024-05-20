@@ -26,6 +26,8 @@ AURA_SUBGRAPHS_BY_CHAIN = {
 
 
 class Subgraph:
+    V3_URL = "https://api-v3.balancer.fi"
+
     def __init__(self, chain: str = "mainnet"):
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
@@ -127,7 +129,7 @@ class Subgraph:
             "core",
             "get_historical_token_prices",
             params,
-            url="https://api-v3.balancer.fi",
+            url=self.V3_URL,
         )
 
         def calc_twap(address: str) -> TWAPResult:
@@ -169,7 +171,7 @@ class Subgraph:
             "core",
             "get_pool_tokens",
             params,
-            url="https://api-v3.balancer.fi",
+            url=self.V3_URL,
         )["poolGetPool"]
 
         bpt_supply = Decimal(token_data["dynamicData"]["totalShares"])
@@ -211,7 +213,7 @@ class Subgraph:
         Fetches all pools info from balancer graphql api
         """
         res = self.fetch_graphql_data(
-            "core", "vebal_get_voting_list", url="https://api-v3.balancer.fi"
+            "core", "vebal_get_voting_list", url=self.V3_URL
         )
         return [Pool(**pool) for pool in res["veBalGetVotingList"]]
 
