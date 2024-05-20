@@ -206,7 +206,7 @@ class Subgraph:
         ).call(block_identifier=block_number)
         return Decimal(aura_vebal_balance) / Decimal(total_supply)
 
-    def fetch_all_pools_info(self) -> List[Dict]:
+    def fetch_all_pools_info(self) -> List[Pool]:
         """
         Fetches all pools info from balancer graphql api
         """
@@ -228,7 +228,7 @@ class Subgraph:
                 {"first": limit, "skip": offset, "block": block},
                 url=graph_url,
             )
-            all_pools.extend(result["poolSnapshots"])
+            all_pools.extend([PoolSnapshot(**pool) for pool in result["poolSnapshots"]])
             offset += limit
             if offset >= 5000:
                 break

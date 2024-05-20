@@ -1,6 +1,6 @@
 from collections import defaultdict
 import re
-from typing import Dict
+from typing import Dict, List
 from .errors import UnexpectedListLengthError, MultipleMatchesError, NoResultError
 from web3 import Web3
 import requests
@@ -187,7 +187,7 @@ class Snapshot:
 class HiddenHand:
     AURA_URL = "https://api.hiddenhand.finance/proposal/aura"
 
-    def fetch_aura_bribs(self):
+    def fetch_aura_bribs(self) -> List[PropData]:
         """
         Fetch GET bribes from hidden hand api
         """
