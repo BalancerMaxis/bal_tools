@@ -5,5 +5,6 @@ web3
 dotmap
 munch==4.0.0
 gql[requests]
+dacite
 
 git+https://github.com/BalancerMaxis/bal_addresses@0.9.1

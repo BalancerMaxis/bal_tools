@@ -1,0 +1,15 @@
+query GetPoolDetails($chain: GqlChain!, $id: String!, $userAddress: String) {
+  poolGetPool(chain: $chain, id: $id, userAddress: $userAddress) {
+    id
+    chain
+    dynamicData {
+      totalShares
+      totalLiquidity
+    }
+    poolTokens {
+      address
+      symbol
+      balance
+    }
+  }
+}
