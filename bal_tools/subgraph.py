@@ -219,7 +219,7 @@ class Subgraph:
 
     def get_balancer_pool_snapshots(
         self, block: int, graph_url: str
-    ) -> Optional[List[Dict]]:
+    ) -> List[PoolSnapshot]:
         all_pools = []
         limit = 1000
         offset = 0
