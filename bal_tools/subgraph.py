@@ -123,7 +123,8 @@ class Subgraph:
         if end_date_ts - start_date_ts > 90 * 24 * 3600:
             raise ValueError("Date range should be 90 days or less.")
 
-        params = {"addresses": addresses, "chain": chain.value, "range": "NINETY_DAY"}
+        chain = chain.value if isinstance(chain, GqlChain) else chain
+        params = {"addresses": addresses, "chain": chain, "range": "NINETY_DAY"}
 
         token_data = self.fetch_graphql_data(
             "core",
@@ -137,7 +138,7 @@ class Subgraph:
                 Decimal(item["price"])
                 for entry in token_data["tokenGetHistoricalPrices"]
                 if entry["address"].lower() == address.lower()
-                and entry["chain"].lower() == chain.value.lower()
+                and entry["chain"].lower() == chain.lower()
                 for item in entry["prices"]
                 if end_date_ts >= int(item["timestamp"]) >= start_date_ts
             ]
@@ -162,8 +163,9 @@ class Subgraph:
         returns:
         - Decimal(twap)
         """
+        chain =  chain.value if isinstance(chain, GqlChain) else chain
         params = {
-            "chain": chain.value,
+            "chain": chain,
             "id": pool_id,
         }
 
