@@ -29,6 +29,7 @@ class Subgraph:
     V3_URL = "https://api-v3.balancer.fi"
 
     def __init__(self, chain: str = "mainnet"):
+        chain = chain.lower()
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
