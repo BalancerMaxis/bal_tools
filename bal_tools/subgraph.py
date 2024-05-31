@@ -182,8 +182,8 @@ class Subgraph:
             url=self.V3_URL,
         )["poolGetPool"]
 
-        bpt_supply = Decimal(token_data["dynamicData"]["totalShares"])
-        token_addresses = [token["address"] for token in token_data["poolTokens"]]
+        bpt_supply = Decimal(token_data["poolTokens"][0]["balance"])
+        token_addresses = [token["address"] for token in token_data["poolTokens"]][1:]
 
         twap_results = self.get_twap_price_token(
             addresses=token_addresses,
