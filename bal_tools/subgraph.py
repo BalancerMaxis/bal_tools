@@ -46,19 +46,20 @@ class Subgraph:
         """
         chain = "gnosis-chain" if self.chain == "gnosis" else self.chain
         
-        # TODO: remove this once the frontend is updated
-        if chain == "polygon" and subgraph == "core":
-            return "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2"
-
         if subgraph == "core":
+            # UI has outdated core subgraph for polygon
+            if chain == "polygon":
+                return "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2"
             magic_word = "subgraph:"
         elif subgraph == "gauges":
             magic_word = "gauge:"
         elif subgraph == "blocks":
             magic_word = "blocks:"
-            ## UI has no blocks subgraph for op
+            ## UI has no blocks subgraph for op or gnosis
             if chain == "optimism":
                 return "https://api.thegraph.com/subgraphs/name/iliaazhel/optimism-blocklytics"
+            elif chain == "gnosis-chain":
+                return "https://api.thegraph.com/subgraphs/name/rebase-agency/gnosis-chain-blocks"
         elif subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(chain, None)
 
