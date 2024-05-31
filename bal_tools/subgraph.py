@@ -106,8 +106,9 @@ class Subgraph:
 
     def get_first_block_after_utc_timestamp(self, timestamp: int) -> int:
         data = self.fetch_graphql_data(
-            "blocks", "first_block_after_ts", {"timestamp": int(timestamp)}
+            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp), "timestamp_lt": int(timestamp) + 100}
         )
+        data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
         return int(data["blocks"][0]["number"])
 
     def get_twap_price_token(
