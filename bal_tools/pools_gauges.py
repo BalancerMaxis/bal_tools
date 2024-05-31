@@ -14,8 +14,8 @@ GITHUB_RAW_CONFIG = (
 
 
 class BalPoolsGauges:
-    def __init__(self, chain, use_cached_core_pools=True):
-        self.chain = chain
+    def __init__(self, chain="mainnet", use_cached_core_pools=True):
+        self.chain = chain.lower()
         self.subgraph = Subgraph(self.chain)
         if use_cached_core_pools:
             self.core_pools = (
