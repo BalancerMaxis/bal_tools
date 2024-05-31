@@ -24,6 +24,16 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/version/v0.0.1/api",
 }
 
+BALANCER_GRAPH_URLS_BY_CHAIN = {
+    "arbitrum": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-arbitrum-v2",
+    "mainnet": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2",
+    "polygon": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2",
+    "gnosis": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-gnosis-chain-v2",
+    "base": "https://api.studio.thegraph.com/query/24660/balancer-base-v2/version/latest",
+    "avalanche": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-avalanche-v2",
+    "zkevm": "https://api.studio.thegraph.com/query/24660/balancer-polygon-zk-v2/version/latest"
+}
+
 
 class Subgraph:
     V3_URL = "https://api-v3.balancer.fi"
@@ -221,7 +231,7 @@ class Subgraph:
         return [Pool(**pool) for pool in res["veBalGetVotingList"]]
 
     def get_balancer_pool_snapshots(
-        self, block: int, graph_url: str
+        self, block: int
     ) -> List[PoolSnapshot]:
         all_pools = []
         limit = 1000
@@ -231,7 +241,7 @@ class Subgraph:
                 "core",
                 "pool_snapshots",
                 {"first": limit, "skip": offset, "block": block},
-                url=graph_url,
+                url=BALANCER_GRAPH_URLS_BY_CHAIN[self.chain],
             )
             all_pools.extend([PoolSnapshot(**pool) for pool in result["poolSnapshots"]])
             offset += limit

@@ -33,15 +33,15 @@ def aura(chain):
 
 
 @pytest.fixture(scope="module")
-def pool_snapshot_apis():
+def pool_snapshot_blocks():
     return {
-    "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-arbitrum-v2": 200000000,
-    "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2": 17000000,
-    "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2": 44000000,
-    "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-gnosis-chain-v2": 28000000,
-    "https://api.studio.thegraph.com/query/24660/balancer-base-v2/version/latest": 14000000,
-    "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-avalanche-v2": 30000000,
-    "https://api.studio.thegraph.com/query/24660/balancer-polygon-zk-v2/version/latest": 1200000
+    "arbitrum": 200000000,
+    "mainnet": 17000000,
+    "polygon": 44000000,
+    "gnosis": 28000000,
+    "base": 14000000,
+    "avalanche": 30000000,
+    "zkevm": 1200000
 }
 
 

@@ -57,7 +57,8 @@ def test_fetch_all_pools_info(subgraph):
     assert isinstance(res[0], Pool)
 
 
-def test_get_balancer_pool_snapshots(subgraph, pool_snapshot_apis):
-    for url, block in pool_snapshot_apis.items():
-        res = subgraph.get_balancer_pool_snapshots(block, url)
+def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
+    if chain in pool_snapshot_blocks.keys():
+        block = pool_snapshot_blocks[chain]
+        res = subgraph_all_chains.get_balancer_pool_snapshots(block)
         assert isinstance(res[0], PoolSnapshot)
