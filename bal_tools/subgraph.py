@@ -129,7 +129,7 @@ class Subgraph:
         if end_date_ts - start_date_ts > 90 * 24 * 3600:
             raise ValueError("Date range should be 90 days or less.")
 
-        chain = chain.value if isinstance(chain, GqlChain) else chain
+        chain = chain.value if isinstance(chain, GqlChain) else chain.upper()
         params = {"addresses": addresses, "chain": chain, "range": "NINETY_DAY"}
 
         token_data = self.fetch_graphql_data(
@@ -169,7 +169,7 @@ class Subgraph:
         returns:
         - Decimal(twap)
         """
-        chain =  chain.value if isinstance(chain, GqlChain) else chain
+        chain =  chain.value if isinstance(chain, GqlChain) else chain.upper()
         params = {
             "chain": chain,
             "id": pool_id,
