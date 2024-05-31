@@ -181,15 +181,26 @@ class Subgraph:
             params,
             url=self.V3_URL,
         )["poolGetPool"]
+        
+        token_addresses = [token["address"] for token in token_data["poolTokens"]]
+        bpt_address = pool_id[:42]
 
-        bpt_supply = Decimal(token_data["poolTokens"][0]["balance"])
-        token_addresses = [token["address"] for token in token_data["poolTokens"]][1:]
+        # sometimes the bpt address is part of the `poolTokens`
+        if bpt_address in token_addresses:
+            bpt_loc = token_addresses.index(bpt_address)
+            bpt_supply = Decimal(token_data["poolTokens"][bpt_loc]["balance"])
+            token_addresses.remove(bpt_address)
+        else:
+            bpt_supply = Decimal(token_data["dynamicData"]["totalShares"])
 
         twap_results = self.get_twap_price_token(
             addresses=token_addresses,
             chain=chain,
             date_range=date_range,
         )
+        
+        if not isinstance(twap_results, list):
+            twap_results = [twap_results]
 
         pool_value = Decimal(0)
         for token, twap_result in zip(token_data["poolTokens"], twap_results):
