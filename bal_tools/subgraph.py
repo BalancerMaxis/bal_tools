@@ -24,16 +24,6 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/version/v0.0.1/api",
 }
 
-BALANCER_GRAPH_URLS_BY_CHAIN = {
-    "arbitrum": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-arbitrum-v2",
-    "mainnet": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-v2",
-    "polygon": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2",
-    "gnosis": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-gnosis-chain-v2",
-    "base": "https://api.studio.thegraph.com/query/24660/balancer-base-v2/version/latest",
-    "avalanche": "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-avalanche-v2",
-    "zkevm": "https://api.studio.thegraph.com/query/24660/balancer-polygon-zk-v2/version/latest"
-}
-
 
 class Subgraph:
     V3_URL = "https://api-v3.balancer.fi"
@@ -55,6 +45,10 @@ class Subgraph:
         - https url of the subgraph
         """
         chain = "gnosis-chain" if self.chain == "gnosis" else self.chain
+        
+        # TODO: remove this once the frontend is updated
+        if chain == "polygon" and subgraph == "core":
+            return "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2"
 
         if subgraph == "core":
             magic_word = "subgraph:"
@@ -241,7 +235,6 @@ class Subgraph:
                 "core",
                 "pool_snapshots",
                 {"first": limit, "skip": offset, "block": block},
-                url=BALANCER_GRAPH_URLS_BY_CHAIN[self.chain],
             )
             all_pools.extend([PoolSnapshot(**pool) for pool in result["poolSnapshots"]])
             offset += limit
