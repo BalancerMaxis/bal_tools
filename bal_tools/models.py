@@ -2,7 +2,7 @@ from typing import Optional, List, Tuple, TypedDict
 from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
-import dacite
+from pydantic import BaseModel, model_validator
 
 
 class GqlChain(Enum):
@@ -24,14 +24,6 @@ DateRange = Tuple[int, int]
 class TWAPResult(TypedDict):
     address: str
     twap: Optional[Decimal]
-
-
-@dataclass
-class BaseModel:
-    def __init__(self, **data):
-        instance = dacite.from_dict(data_class=self.__class__, data=data)
-        for field_info in fields(self):
-            setattr(self, field_info.name, getattr(instance, field_info.name))
 
 
 @dataclass
@@ -77,14 +69,17 @@ class PropData(BaseModel):
     index: str
 
 
-@dataclass
-class TokenFee:
+class TokenFee(BaseModel):
     symbol: str
     address: str
-    paidProtocolFees: str
+    paidProtocolFees: Optional[Decimal] = None
 
+    @model_validator(mode="before")
+    def cast(cls, values):
+        fees = values['paidProtocolFees']
+        values['paidProtocolFees'] = Decimal(fees) if fees else Decimal(0)
+        return values
 
-@dataclass
 class PoolSnapshot(BaseModel):
     timestamp: int
     protocolFee: str
@@ -94,5 +89,11 @@ class PoolSnapshot(BaseModel):
     address: str
     id: str
     symbol: str
-    totalProtocolFeePaidInBPT: Optional[str]
+    totalProtocolFeePaidInBPT: Optional[Decimal] = None
     tokens: List[TokenFee]
+
+    @model_validator(mode="before")
+    def cast(cls, values):
+        fee = values['totalProtocolFeePaidInBPT']
+        values['totalProtocolFeePaidInBPT'] = Decimal(fee) if fee else Decimal(0)
+        return values

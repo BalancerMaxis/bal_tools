@@ -60,5 +60,8 @@ def test_fetch_all_pools_info(subgraph):
 def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
     if chain in pool_snapshot_blocks.keys():
         block = pool_snapshot_blocks[chain]
-        res = subgraph_all_chains.get_balancer_pool_snapshots(block)
+        res = subgraph_all_chains.get_balancer_pool_snapshots(block, pools_per_req=25, limit=25)
+
         assert isinstance(res[0], PoolSnapshot)
+        assert all(isinstance(pool.totalProtocolFeePaidInBPT, Decimal) for pool in res)
+        assert all(isinstance(pool.tokens[0].paidProtocolFees, Decimal) for pool in res)
