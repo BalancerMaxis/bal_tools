@@ -243,7 +243,6 @@ class Subgraph:
         all_pools = []
         offset = 0
         while True:
-            print(f"Fetching pools {offset} to {offset + pools_per_req}")
             result = self.fetch_graphql_data(
                 "core",
                 "pool_snapshots",
