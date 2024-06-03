@@ -238,10 +238,9 @@ class Subgraph:
         return [Pool(**pool) for pool in res["veBalGetVotingList"]]
 
     def get_balancer_pool_snapshots(
-        self, block: int
+        self, block: int, limit: int = 1000
     ) -> List[PoolSnapshot]:
         all_pools = []
-        limit = 1000
         offset = 0
         while True:
             result = self.fetch_graphql_data(
