@@ -7,7 +7,7 @@ from decimal import Decimal
 from bal_addresses import AddrBook
 from web3 import Web3
 
-from .utils import get_abi
+from .utils import get_abi, flatten_nested_dict
 from .models import *
 
 
@@ -248,7 +248,7 @@ class Subgraph:
                 "pool_snapshots",
                 {"first": pools_per_req, "skip": offset, "block": block},
             )
-            all_pools.extend([PoolSnapshot(**pool) for pool in result["poolSnapshots"]])
+            all_pools.extend([PoolSnapshot(**flatten_nested_dict(pool)) for pool in result["poolSnapshots"]])
             offset += pools_per_req
             if offset >= limit:
                 break

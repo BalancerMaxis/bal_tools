@@ -85,19 +85,14 @@ class TokenFee:
 
 
 @dataclass
-class PoolSnapData:
-    address: str
-    id: str
-    symbol: str
-    totalProtocolFeePaidInBPT: Optional[str]
-    tokens: List[TokenFee]
-
-
-@dataclass
 class PoolSnapshot(BaseModel):
-    pool: PoolSnapData
     timestamp: int
     protocolFee: str
     swapFees: str
     swapVolume: str
     liquidity: str
+    address: str
+    id: str
+    symbol: str
+    totalProtocolFeePaidInBPT: Optional[str]
+    tokens: List[TokenFee]

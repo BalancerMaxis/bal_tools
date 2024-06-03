@@ -23,3 +23,11 @@ def get_abi(contract_name: str) -> Union[Dict, List[Dict]]:
     project_root_dir = os.path.abspath(os.path.dirname(__file__))
     with open(f"{project_root_dir}/abi/{contract_name}.json") as f:
         return json.load(f)
+
+
+def flatten_nested_dict(d):
+    for key, value in list(d.items()):
+        if isinstance(value, dict):
+            d.pop(key)
+            d.update(value)
+    return d
