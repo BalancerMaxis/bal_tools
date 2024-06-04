@@ -27,7 +27,7 @@ def test_get_twap_price_token(subgraph, date_range):
     addresses = ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"]
     chain = GqlChain.MAINNET
     result = subgraph.get_twap_price_token(addresses, chain, date_range)
-    assert result["twap"] == Decimal(150)
+    assert result.twap_price == Decimal(150)
 
 
 @patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
@@ -51,27 +51,26 @@ def test_fetch_all_pools_info(subgraph):
     assert pool.chain == "ARBITRUM"
     assert pool.type == "GYRO"
     assert pool.symbol == "2CLP-AUSDC-USDC"
-    assert pool.gauge["address"] == "0x75ba7f8733c154302cbe2e19fe3ec417e0679833"
-    assert pool.tokens[0]["address"] == "0x7cfadfd5645b50be87d546f42699d863648251ad"
-    assert pool.tokens[1]["address"] == "0xaf88d065e77c8cc2239327c5edb3a432268e5831"
+    assert pool.gauge.address == "0x75ba7f8733c154302cbe2e19fe3ec417e0679833"
+    assert pool.tokens[0].address == "0x7cfadfd5645b50be87d546f42699d863648251ad"
+    assert pool.tokens[1].address == "0xaf88d065e77c8cc2239327c5edb3a432268e5831"
 
 
 @patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
 def test_get_balancer_pool_snapshots(subgraph):
     block = 12345678
-    graph_url = "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer"
-    result = subgraph.get_balancer_pool_snapshots(block, graph_url)
+    result = subgraph.get_balancer_pool_snapshots(block=block)
     assert isinstance(result, list)
     assert len(result) == 1
     snapshot = result[0]
-    assert snapshot.pool["address"] == "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea6"
+    assert snapshot.address == "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea6"
     assert (
-        snapshot.pool["id"]
+        snapshot.id
         == "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea6000200000000000000000426"
     )
-    assert snapshot.pool["symbol"] == "DOLA-USDC BSP"
-    assert snapshot.pool["tokens"][0]["symbol"] == "DOLA"
-    assert snapshot.pool["tokens"][1]["symbol"] == "USDC"
+    assert snapshot.symbol == "DOLA-USDC BSP"
+    assert snapshot.tokens[0].symbol == "DOLA"
+    assert snapshot.tokens[1].symbol == "USDC"
     assert snapshot.timestamp == 1713744000
     assert snapshot.protocolFee == "20729.00526903175861936991501109402"
     assert snapshot.swapFees == "42555.1058049324"

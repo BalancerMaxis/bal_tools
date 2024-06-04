@@ -39,8 +39,8 @@ def test_get_twap_price_token(subgraph, date_range):
         chain=GqlChain.MAINNET,
         date_range=date_range,
     )
-    assert res["address"] == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
-    assert isinstance(res["twap"], Decimal)
+    assert res.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
+    assert isinstance(res.twap_price, Decimal)
 
 
 def test_get_twap_price_bpt(subgraph, date_range):

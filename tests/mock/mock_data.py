@@ -1,5 +1,5 @@
 MOCK_FIRST_BLOCK_AFTER_TS = {
-    "blocks": [{"number": "12345678"}]
+    "blocks": [{"number": "12345678", "timestamp": "1708607101"}]
 }
 
 MOCK_HISTORICAL_TOKEN_PRICES = {

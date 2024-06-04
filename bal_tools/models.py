@@ -21,21 +21,20 @@ class GqlChain(Enum):
 DateRange = Tuple[int, int]
 
 
-class TWAPResult(TypedDict):
-    address: str
-    twap: Optional[Decimal]
-
-
 @dataclass
-class Token:
+class TWAPResult:
+    address: str
+    twap_price: Optional[Decimal]
+
+
+class Token(BaseModel):
     address: str
     logoURI: str
     symbol: str
     weight: Optional[str]
 
 
-@dataclass
-class Gauge:
+class Gauge(BaseModel):
     address: str
     isKilled: bool
     relativeWeightCap: Optional[str]
@@ -43,7 +42,6 @@ class Gauge:
     childGaugeAddress: Optional[str]
 
 
-@dataclass
 class Pool(BaseModel):
     id: str
     address: str
@@ -54,7 +52,6 @@ class Pool(BaseModel):
     tokens: List[Token]
 
 
-@dataclass
 class PropData(BaseModel):
     proposal: str
     proposalHash: str
@@ -76,9 +73,10 @@ class TokenFee(BaseModel):
 
     @model_validator(mode="before")
     def cast(cls, values):
-        fees = values['paidProtocolFees']
-        values['paidProtocolFees'] = Decimal(fees) if fees else Decimal(0)
+        fees = values["paidProtocolFees"]
+        values["paidProtocolFees"] = Decimal(fees) if fees else Decimal(0)
         return values
+
 
 class PoolSnapshot(BaseModel):
     timestamp: int
@@ -94,6 +92,6 @@ class PoolSnapshot(BaseModel):
 
     @model_validator(mode="before")
     def cast(cls, values):
-        fee = values['totalProtocolFeePaidInBPT']
-        values['totalProtocolFeePaidInBPT'] = Decimal(fee) if fee else Decimal(0)
+        fee = values["totalProtocolFeePaidInBPT"]
+        values["totalProtocolFeePaidInBPT"] = Decimal(fee) if fee else Decimal(0)
         return values

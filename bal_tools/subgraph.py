@@ -151,7 +151,7 @@ class Subgraph:
             ]
             if not prices:
                 return None
-            return TWAPResult(address=address, twap=sum(prices) / len(prices))
+            return TWAPResult(address=address, twap_price=sum(prices) / len(prices))
 
         results = [calc_twap(addr) for addr in addresses]
         return results[0] if len(results) == 1 else results
@@ -206,7 +206,7 @@ class Subgraph:
         pool_value = Decimal(0)
         for token, twap_result in zip(token_data["poolTokens"], twap_results):
             balance = Decimal(token["balance"])
-            pool_value += twap_result["twap"] * balance
+            pool_value += twap_result.twap_price * balance
 
         return pool_value / bpt_supply
 
