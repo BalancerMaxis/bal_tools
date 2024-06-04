@@ -238,8 +238,13 @@ class Subgraph:
         return [Pool(**pool) for pool in res["veBalGetVotingList"]]
 
     def get_balancer_pool_snapshots(
-        self, block: int, pools_per_req: int = 1000, limit: int = 5000
+        self, block: int = None, timestamp: int = None, pools_per_req: int = 1000, limit: int = 5000
     ) -> List[PoolSnapshot]:
+        if not any([block, timestamp]):
+            raise ValueError("Must pass either block or timestamp")
+        
+        block = block or self.get_first_block_after_utc_timestamp(timestamp)
+
         all_pools = []
         offset = 0
         while True:
