@@ -1,9 +1,21 @@
 import pytest
+import os
 
 from bal_addresses import AddrBook
 from bal_tools.pools_gauges import BalPoolsGauges
 from bal_tools.subgraph import Subgraph
 from bal_tools.ecosystem import Aura
+
+from web3 import Web3
+from dotenv import load_dotenv
+
+
+load_dotenv()
+
+
+@pytest.fixture(scope="module")
+def web3():
+    return Web3(Web3.HTTPProvider(os.getenv("ETHNODEURL")))
 
 
 @pytest.fixture(scope="module", params=list(AddrBook.chains["CHAIN_IDS_BY_NAME"]))

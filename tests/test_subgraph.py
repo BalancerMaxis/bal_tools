@@ -1,5 +1,4 @@
 import pytest
-from datetime import datetime
 from decimal import Decimal
 
 from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot, DateRange
@@ -7,9 +6,7 @@ from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot, DateRange
 
 @pytest.fixture(scope="module")
 def date_range():
-    now = int(datetime.utcnow().timestamp())
-    two_weeks_ago = now - (60 * 60 * 24 * 7 * 1)
-    return (two_weeks_ago, now)
+    return (1717632000, 1718015100)
 
 
 def test_get_first_block_after_utc_timestamp(chain, subgraph_all_chains):
@@ -39,17 +36,30 @@ def test_get_twap_price_token(subgraph, date_range):
         chain=GqlChain.MAINNET,
         date_range=date_range,
     )
-    assert res.address == "0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"
     assert isinstance(res.twap_price, Decimal)
-
-
-def test_get_twap_price_bpt(subgraph, date_range):
+    assert pytest.approx(res.twap_price, rel=Decimal(1e-2)) == Decimal(3743.80)
+    
+    
+def test_get_twap_price_bpt_subgraph(subgraph, date_range):
     res = subgraph.get_twap_price_bpt(
-        pool_id="0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014",
+        pool_id="0x05ff47afada98a98982113758878f9a8b9fdda0a000000000000000000000645",
         chain=GqlChain.MAINNET,
         date_range=date_range,
     )
     assert isinstance(res, Decimal)
+    assert pytest.approx(res, rel=Decimal(1e-2)) == Decimal(4149.46)
+
+
+def test_get_twap_price_bpt_web3(subgraph, date_range, web3):
+    res = subgraph.get_twap_price_bpt(
+        pool_id="0x05ff47afada98a98982113758878f9a8b9fdda0a000000000000000000000645",
+        chain=GqlChain.MAINNET,
+        date_range=date_range,
+        web3=web3,
+        block=20059322
+    )
+    assert isinstance(res, Decimal)
+    assert pytest.approx(res, rel=Decimal(1e-2)) == Decimal(3794.95)
 
 
 def test_fetch_all_pools_info(subgraph):

@@ -161,10 +161,11 @@ class Subgraph:
         return results[0] if len(results) == 1 else results
 
     def get_twap_price_bpt(
-        self, pool_id: str, chain: GqlChain, date_range: DateRange
+        self, pool_id: str, chain: GqlChain, date_range: DateRange, web3: Web3 = None, block: int = None
     ) -> Decimal:
         """
         fetches the TWAP price of a pool's BPT over the given date range.
+        if web3 and a block are passed, the function will calculate the total supply of the pool at the given block
 
         params:
         - pool_id: the id of the pool
@@ -190,13 +191,27 @@ class Subgraph:
         token_addresses = [token["address"] for token in token_data["poolTokens"]]
         bpt_address = pool_id[:42]
 
-        # sometimes the bpt address is part of the `poolTokens`
-        if bpt_address in token_addresses:
-            bpt_loc = token_addresses.index(bpt_address)
-            bpt_supply = Decimal(token_data["poolTokens"][bpt_loc]["balance"])
-            token_addresses.remove(bpt_address)
+        if web3 and block:
+            balancer_pool_address = Web3.to_checksum_address(pool_id[:42])
+            weighed_pool_contract = web3.eth.contract(
+                address=web3.to_checksum_address(balancer_pool_address),
+                abi=get_abi("WeighedPool"),
+            )
+            decimals = weighed_pool_contract.functions.decimals().call()
+            bpt_supply = Decimal(
+                weighed_pool_contract.functions.totalSupply().call(
+                    block_identifier=block
+            )
+            / 10**decimals
+        )
         else:
-            bpt_supply = Decimal(token_data["dynamicData"]["totalShares"])
+            # sometimes the bpt address is part of the `poolTokens`
+            if bpt_address in token_addresses:
+                bpt_loc = token_addresses.index(bpt_address)
+                bpt_supply = Decimal(token_data["poolTokens"][bpt_loc]["balance"])
+                token_addresses.remove(bpt_address)
+            else:
+                bpt_supply = Decimal(token_data["dynamicData"]["totalShares"])
 
         twap_results = self.get_twap_price_token(
             addresses=token_addresses,
