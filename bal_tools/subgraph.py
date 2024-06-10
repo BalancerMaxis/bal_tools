@@ -2,10 +2,11 @@ from urllib.request import urlopen
 import os
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
-from typing import Optional, Union, List, Dict
+from typing import Union, List
 from decimal import Decimal
 from bal_addresses import AddrBook
 from web3 import Web3
+from datetime import datetime
 
 from .utils import get_abi, flatten_nested_dict
 from .models import *
@@ -106,8 +107,11 @@ class Subgraph:
         return result
 
     def get_first_block_after_utc_timestamp(self, timestamp: int) -> int:
+        if timestamp > int(datetime.now().strftime("%s")):
+            timestamp = int(datetime.now().strftime("%s")) - 2000
+
         data = self.fetch_graphql_data(
-            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp), "timestamp_lt": int(timestamp) + 100}
+            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp)-5, "timestamp_lt": int(timestamp) + 5}
         )
         data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
         return int(data["blocks"][0]["number"])
@@ -127,11 +131,11 @@ class Subgraph:
             addresses = [addresses]
 
         start_date_ts, end_date_ts = date_range[0], date_range[1]
-        if end_date_ts - start_date_ts > 90 * 24 * 3600:
-            raise ValueError("Date range should be 90 days or less.")
+        if end_date_ts - start_date_ts > 30 * 24 * 3600:
+            raise ValueError("Date range should be 30 days or less.")
 
         chain = chain.value if isinstance(chain, GqlChain) else chain.upper()
-        params = {"addresses": addresses, "chain": chain, "range": "NINETY_DAY"}
+        params = {"addresses": addresses, "chain": chain, "range": "THIRTY_DAY"}
 
         token_data = self.fetch_graphql_data(
             "core",
@@ -182,7 +186,7 @@ class Subgraph:
             params,
             url=self.V3_URL,
         )["poolGetPool"]
-        
+
         token_addresses = [token["address"] for token in token_data["poolTokens"]]
         bpt_address = pool_id[:42]
 
