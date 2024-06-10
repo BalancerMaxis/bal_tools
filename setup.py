@@ -13,7 +13,7 @@ setup(
     long_description=LONG_DESCRIPTION,
     packages=find_packages(),
     include_package_data=True,  # Automatically include non-Python files
-    package_data={"": ["graphql/**/*.gql"], "''": ["abi/*.json"]},
+    package_data={"bal_tools": ["abi/*.json", "graphql/**/*.gql"]},
     url="https://github.com/BalancerMaxis/bal_tools",
     install_requires=[
         "setuptools>=42",
