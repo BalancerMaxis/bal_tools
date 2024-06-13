@@ -22,7 +22,7 @@ setup(
         "web3",
         "gql[requests]",
         "requests",
-        "pydantic",
+        "pydantic==2.7.4",
     ],
     keywords=["python", "first package"],
     classifiers=[
