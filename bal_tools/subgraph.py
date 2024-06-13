@@ -111,7 +111,7 @@ class Subgraph:
             timestamp = int(datetime.now().strftime("%s")) - 2000
 
         data = self.fetch_graphql_data(
-            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp)-5, "timestamp_lt": int(timestamp) + 5}
+            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp)-200, "timestamp_lt": int(timestamp) + 200}
         )
         data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
         return int(data["blocks"][0]["number"])
@@ -131,11 +131,15 @@ class Subgraph:
             addresses = [addresses]
 
         start_date_ts, end_date_ts = date_range[0], date_range[1]
-        if end_date_ts - start_date_ts > 30 * 24 * 3600:
-            raise ValueError("Date range should be 30 days or less.")
+
+        current_ts = int(datetime.utcnow().timestamp())
+        one_year_ago_ts = current_ts - 360 * 24 * 3600
+
+        if not (one_year_ago_ts <= start_date_ts <= current_ts and one_year_ago_ts <= end_date_ts <= current_ts):
+            raise ValueError("date range should be within the past year.")
 
         chain = chain.value if isinstance(chain, GqlChain) else chain.upper()
-        params = {"addresses": addresses, "chain": chain, "range": "THIRTY_DAY"}
+        params = {"addresses": addresses, "chain": chain, "range": "ONE_YEAR"}
 
         token_data = self.fetch_graphql_data(
             "core",
