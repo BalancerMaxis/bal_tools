@@ -22,11 +22,11 @@ class SafeTxBuilder:
             cls._instance.timestamp = timestamp if timestamp else datetime.utcnow().timestamp()
             cls._instance.tx_builder_version = tx_builder_version
             cls._instance.base_payload = cls.load_template(TemplateType.BASE)
-            cls._instance.add_medadata()
+            cls._instance.add_metadata()
         else:
             if safe_address:
                 cls._instance.safe_address = safe_address
-                cls._instance.add_medadata()
+                cls._instance.add_metadata()
         return cls._instance
 
     @staticmethod
@@ -40,7 +40,7 @@ class SafeTxBuilder:
 
         return model.model_validate_json(file_content)
 
-    def add_medadata(self):
+    def add_metadata(self):
         self.base_payload.version = self.version
         self.base_payload.chainId = self.chain_id
         self.base_payload.createdAt = int(self.timestamp)
