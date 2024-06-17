@@ -1,0 +1,14 @@
+{
+    "version": "",
+    "chainId": "",
+    "createdAt": 0,
+    "meta": {
+        "name": "Transactions Batch",
+        "description": "",
+        "txBuilderVersion": "",
+        "createdFromSafeAddress": "",
+        "createdFromOwnerAddress": "",
+        "checksum": "0x0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    "transactions": []
+}

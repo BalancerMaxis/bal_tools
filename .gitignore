@@ -4,3 +4,5 @@ __pycache__/
 .env
 Pipfile*
 .pytest_cache
+
+tests/payload_outputs/*.json
