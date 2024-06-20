@@ -26,6 +26,10 @@ class TWAPResult:
     address: str
     twap_price: Optional[Decimal]
 
+@dataclass
+class TwapPrices:
+    bpt_price: Decimal
+    token_prices: List[TWAPResult]
 
 class Token(BaseModel):
     address: str
