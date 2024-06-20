@@ -38,6 +38,7 @@ class Subgraph:
         self.custom_price_logic: Dict[str, Callable] = {
             # do not checksum
             "0xf1617882a71467534d14eee865922de1395c9e89": self._saETH,
+            "0xfc87753df5ef5c368b5fba8d4c5043b77e8c5b39": self._aETH,
         }
 
     def get_subgraph_url(self, subgraph="core") -> str:
@@ -313,7 +314,7 @@ class Subgraph:
             address=web3.to_checksum_address(address),
             abi=get_abi("saETH"),
         )
-        
+
         shares = Decimal(saeth.functions.convertToShares(int(1e18)).call(block_identifier=block) / int(1e18))
         
         res =  self.get_twap_price_token(
@@ -322,3 +323,12 @@ class Subgraph:
             date_range=date_range,
         )
         return TWAPResult(address=address, twap_price=res.twap_price * shares)
+    
+    def _aETH(self, address: str, chain: str, date_range: DateRange, web3: Web3 = None, block: int = None) -> TWAPResult:
+        # pegged to eth
+        prices = self.get_twap_price_token(
+            addresses=["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"],
+            chain=chain,
+            date_range=date_range,
+        )
+        return TWAPResult(address=address, twap_price=prices.twap_price)
