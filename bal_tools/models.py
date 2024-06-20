@@ -1,8 +1,8 @@
-from typing import Optional, List, Tuple, TypedDict
+from typing import Optional, List, Tuple
 from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
-from pydantic import BaseModel, model_validator
+from pydantic import BaseModel, validator, Field
 
 
 class GqlChain(Enum):
@@ -73,29 +73,44 @@ class PropData(BaseModel):
 class TokenFee(BaseModel):
     symbol: str
     address: str
-    paidProtocolFees: Optional[Decimal] = None
+    paidProtocolFees: Optional[Decimal] = Field(None, alias='paidProtocolFees')
 
-    @model_validator(mode="before")
-    def cast(cls, values):
-        fees = values["paidProtocolFees"]
-        values["paidProtocolFees"] = Decimal(fees) if fees else Decimal(0)
-        return values
-
+    @validator('paidProtocolFees', pre=True, always=True)
+    def cast_fees(cls, v):
+        if v is None or v == '0':
+            return Decimal(0)
+        return Decimal(v)
+    
+    @validator('symbol', pre=True, always=True)
+    def validate_symbol(cls, v):
+        if not isinstance(v, str) or not v:
+            return ''
+        return v
 
 class PoolSnapshot(BaseModel):
     timestamp: int
-    protocolFee: str
-    swapFees: str
-    swapVolume: str
-    liquidity: str
+    protocolFee: Decimal
+    swapFees: Decimal
+    swapVolume: Decimal
+    liquidity: Decimal
     address: str
     id: str
     symbol: str
-    totalProtocolFeePaidInBPT: Optional[Decimal] = None
+    totalProtocolFeePaidInBPT: Decimal = Field(default=Decimal(0))
     tokens: List[TokenFee]
+    
+    @validator('totalProtocolFeePaidInBPT', pre=True, always=True)
+    def set_default_total_fee(cls, v):
+        if v is None:
+            return Decimal(0)
+        return Decimal(v)
 
-    @model_validator(mode="before")
-    def cast(cls, values):
-        fee = values["totalProtocolFeePaidInBPT"]
-        values["totalProtocolFeePaidInBPT"] = Decimal(fee) if fee else Decimal(0)
-        return values
+    @validator('protocolFee', 'swapFees', 'swapVolume', 'liquidity', pre=True)
+    def str_to_decimal(cls, v):
+        return Decimal(v)
+
+    @validator('symbol', pre=True, always=True)
+    def validate_symbol(cls, v):
+        if not isinstance(v, str) or not v:
+            return ''
+        return v
