@@ -7,6 +7,7 @@ class InputType:
     name: str
     type: str
 
+
 @dataclass
 class ABIFunction:
     name: Optional[str] = None
@@ -14,7 +15,8 @@ class ABIFunction:
     outputs: List[str] = None
     constant: bool = False
     payable: bool = False
-    
+
+
 @dataclass
 class ContractABI:
     functions: List[ABIFunction]
@@ -28,7 +30,10 @@ def parse_json_abi(abi: dict) -> ContractABI:
             name = entry["name"]
             input_types = [collapse_if_tuple(inputs) for inputs in entry["inputs"]]
             input_names = [i["name"] for i in entry["inputs"]]
-            inputs = [InputType(name=name, type=typ) for name, typ in zip(input_names, input_types)]
+            inputs = [
+                InputType(name=name, type=typ)
+                for name, typ in zip(input_names, input_types)
+            ]
             outputs = [collapse_if_tuple(outputs) for outputs in entry["outputs"]]
             constant = entry["stateMutability"] in ("view", "pure")
             payable = entry["stateMutability"] == "payable"

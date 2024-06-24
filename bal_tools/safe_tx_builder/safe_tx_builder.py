@@ -2,45 +2,71 @@ from typing import Optional, Union
 from datetime import datetime
 import os
 
+from bal_addresses import AddrBook
+from web3 import Web3
+
 from .models import *
+
 
 class SafeTxBuilder:
     _instance = None
-    safe_address: Optional[str] = None
-    base_payload: Optional[BasePayload] = None
-    chain_id: str = "1"
-    version: str = "1.0"
-    timestamp: str
-    tx_builder_version: str = "1.16.3"
 
-    def __new__(cls, safe_address: str = None, chain_id: str = "1", version: str = "1.0", timestamp: str = None, tx_builder_version: str = "1.16.3"):
+    def __new__(
+        cls,
+        safe_address: Optional[str] = None,
+        chain_id: str = "1",
+        version: str = "1.0",
+        timestamp: Optional[str] = None,
+        tx_builder_version: str = "1.16.3",
+    ):
         if cls._instance is None:
+            if safe_address is None:
+                raise ValueError("`safe_address` is required")
             cls._instance = super(SafeTxBuilder, cls).__new__(cls)
-            cls._instance.safe_address = safe_address
-            cls._instance.chain_id = chain_id
-            cls._instance.version = version
-            cls._instance.timestamp = timestamp if timestamp else datetime.utcnow().timestamp()
-            cls._instance.tx_builder_version = tx_builder_version
-            cls._instance.base_payload = cls.load_template(TemplateType.BASE)
-            cls._instance.add_metadata()
-        else:
-            if safe_address:
-                cls._instance.safe_address = safe_address
-                cls._instance.add_metadata()
+            cls._instance._initialize(
+                safe_address, chain_id, version, timestamp, tx_builder_version
+            )
         return cls._instance
 
+    def _initialize(
+        self,
+        safe_address: str,
+        chain_id: str,
+        version: str,
+        timestamp: Optional[str],
+        tx_builder_version: str,
+    ):
+        self.chain_id = chain_id
+        self.addr_book = AddrBook(
+            AddrBook.chain_names_by_id[int(self.chain_id)]
+        ).flatbook
+        self.safe_address = self._resolve_address(safe_address)
+        self.version = version
+        self.timestamp = timestamp if timestamp else datetime.utcnow().timestamp()
+        self.tx_builder_version = tx_builder_version
+        self.base_payload = self.load_template(TemplateType.BASE)
+        self._load_payload_metadata()
+
     @staticmethod
-    def load_template(template_type: TemplateType) -> Union[BasePayload, Transaction, InputType]:
+    def load_template(
+        template_type: TemplateType,
+    ) -> Union[BasePayload, Transaction, InputType]:
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        file_path = os.path.join(current_dir, 'templates', template_type.file_name)
+        file_path = os.path.join(current_dir, "templates", template_type.file_name)
 
         model = template_type.model
-        with open(file_path, 'r') as f:
+        with open(file_path, "r") as f:
             file_content = f.read()
 
         return model.model_validate_json(file_content)
 
-    def add_metadata(self):
+    def _resolve_address(self, identifier: str) -> str:
+        if Web3.is_address(identifier):
+            return identifier
+
+        return self.addr_book[identifier]
+
+    def _load_payload_metadata(self):
         self.base_payload.version = self.version
         self.base_payload.chainId = self.chain_id
         self.base_payload.createdAt = int(self.timestamp)

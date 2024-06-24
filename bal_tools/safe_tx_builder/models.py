@@ -10,24 +10,30 @@ class Meta(BaseModel):
     txBuilderVersion: str = Field(default="1.16.3")
     createdFromSafeAddress: str = Field(default="")
     createdFromOwnerAddress: str = Field(default="")
-    checksum: str = Field(default="0x0000000000000000000000000000000000000000000000000000000000000000")
+    checksum: str = Field(
+        default="0x0000000000000000000000000000000000000000000000000000000000000000"
+    )
+
 
 class ContractMethod(BaseModel):
     inputs: List[dict] = Field(default_factory=list)
     name: str = Field(default="")
     payable: bool = Field(default=False)
 
+
 class Transaction(BaseModel):
     to: str = Field(default="")
     value: str = Field(default="0")
     data: Optional[str] = Field(default=None)
-    contractMethod:ContractMethod = Field(default_factory=ContractMethod)
+    contractMethod: ContractMethod = Field(default_factory=ContractMethod)
     contractInputsValues: dict = Field(default_factory=dict)
+
 
 class InputType(BaseModel):
     name: str = Field(default="")
     type: str = Field(default="")
     internalType: str = Field(default="")
+
 
 class BasePayload(BaseModel):
     version: str = Field(default="1.0")
@@ -35,6 +41,7 @@ class BasePayload(BaseModel):
     createdAt: int = Field(default_factory=lambda: int(datetime.utcnow().timestamp()))
     meta: Meta = Field(default_factory=Meta)
     transactions: List[Transaction] = Field(default_factory=list)
+
 
 class TemplateType(Enum):
     BASE = ("base.json", BasePayload)

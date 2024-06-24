@@ -29,12 +29,16 @@ def aura(chain):
     return Aura(chain)
 
 @pytest.fixture(scope="module")
-def msig_address():
-    return "0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f"
+def addr_book():
+    return AddrBook("mainnet").flatbook
 
 @pytest.fixture(scope="module")
-def safe_tx_builder(msig_address) -> SafeTxBuilder:
-    return SafeTxBuilder(msig_address)
+def msig_name():
+    return "multisigs/vote_incentive_recycling"
+
+@pytest.fixture(scope="module")
+def safe_tx_builder(msig_name) -> SafeTxBuilder:
+    return SafeTxBuilder(msig_name)
 
 @pytest.fixture(scope="module")
 def erc20_abi():

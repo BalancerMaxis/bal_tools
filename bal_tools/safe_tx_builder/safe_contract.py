@@ -16,13 +16,16 @@ class SafeContract:
         abi_file_path: str = None,
     ):
         self.tx_builder = SafeTxBuilder()
-        self.address = address
+        self.address = self.tx_builder._resolve_address(address)
         self.abi = self._load_abi(abi, abi_file_path)
 
     def __getattr__(self, attribute):
-        for func in self.abi.functions:
-            if func.name == attribute:
-                return lambda *args, **kwargs: self.call_function(func, args, kwargs)
+        if self.abi and hasattr(self.abi, "functions"):
+            for func in self.abi.functions:
+                if func.name == attribute:
+                    return lambda *args, **kwargs: self.call_function(
+                        func, args, kwargs
+                    )
         raise AttributeError(f"No function named {attribute} in contract ABI")
 
     def _load_abi(self, abi: dict = None, file_path: dict = None) -> ContractABI:
@@ -49,22 +52,25 @@ class SafeContract:
 
         if len(args) != len(func.inputs):
             raise ValueError("Number of arguments does not match function inputs")
-        
+
         tx = self.tx_builder.load_template(TemplateType.TRANSACTION)
         tx.to = self.address
         tx.contractMethod.name = func.name
         tx.contractMethod.payable = func.payable
         tx.value = str(kwargs.get("value", "0"))
-        
+
         if not func.inputs:
             tx.contractInputsValues = None
 
-        for i, input_type in enumerate(func.inputs):
+        for arg, input_type in zip(args, func.inputs):
+            if input_type.type == "address":
+                arg = self.tx_builder._resolve_address(arg)
+
             input_template = self.tx_builder.load_template(TemplateType.INPUT_TYPE)
             input_template.name = input_type.name
             input_template.type = input_type.type
             input_template.internalType = input_type.type
             tx.contractMethod.inputs.append(input_template)
-            tx.contractInputsValues[input_type.name] = self._handle_type(args[i])
+            tx.contractInputsValues[input_type.name] = self._handle_type(arg)
 
         self.tx_builder.base_payload.transactions.append(tx)

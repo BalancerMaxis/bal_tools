@@ -2,21 +2,24 @@ import pytest
 
 from bal_tools.safe_tx_builder import SafeContract, SafeTxBuilder
 from bal_tools.safe_tx_builder.models import BasePayload
+from bal_addresses import AddrBook
+
+addr_book = AddrBook("mainnet").flatbook
 
 
 def test_safe_contract(
-    safe_tx_builder: SafeTxBuilder, msig_address, erc20_abi, bribe_market_abi
+    safe_tx_builder: SafeTxBuilder, erc20_abi, bribe_market_abi, addr_book, msig_name
 ):
     usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
     bribe_market_address = "0x45Bc37b18E73A42A4a826357a8348cDC042cCBBc"
 
-    usdc = SafeContract(usdc_address, erc20_abi)
+    usdc = SafeContract("tokens/USDC", erc20_abi)
     usdc.approve(bribe_market_address, 100e18)
 
     bribe_market = SafeContract(bribe_market_address, bribe_market_abi)
     bribe_market.depositBribe(
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        usdc_address,
+        "tokens/USDC",
         1e18,
         0,
         2,
@@ -24,7 +27,7 @@ def test_safe_contract(
 
     payload = safe_tx_builder.output_payload("tests/payload_outputs/test.json")
 
-    assert safe_tx_builder.safe_address == msig_address
+    assert safe_tx_builder.safe_address == addr_book[msig_name]
 
     assert payload.transactions[0].to == usdc_address
     assert payload.transactions[0].contractMethod.name == "approve"
