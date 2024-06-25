@@ -2,9 +2,6 @@ import pytest
 
 from bal_tools.safe_tx_builder import SafeContract, SafeTxBuilder
 from bal_tools.safe_tx_builder.models import BasePayload
-from bal_addresses import AddrBook
-
-addr_book = AddrBook("mainnet").flatbook
 
 
 def test_safe_contract(
