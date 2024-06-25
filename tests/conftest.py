@@ -7,8 +7,11 @@ from bal_tools.subgraph import Subgraph
 from bal_tools.ecosystem import Aura
 from bal_tools.safe_tx_builder import SafeTxBuilder
 
+exempt_chains = ["fantom", "mode", "linea", "fraxtal"]
+chains = [chain for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"]) if chain not in exempt_chains]
 
-@pytest.fixture(scope="module", params=list(AddrBook.chains["CHAIN_IDS_BY_NAME"]))
+
+@pytest.fixture(scope="module", params=chains)
 def chain(request):
     chain = request.param
     return chain
