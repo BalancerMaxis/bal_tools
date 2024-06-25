@@ -31,8 +31,7 @@ def test_safe_contract(
     assert payload.transactions[0].contractMethod.inputs[0].type == "address"
     assert payload.transactions[0].contractMethod.inputs[1].type == "uint256"
     assert (
-        payload.transactions[0].contractInputsValues["_spender"]
-        == bribe_market_address
+        payload.transactions[0].contractInputsValues["_spender"] == bribe_market_address
     )
     assert payload.transactions[0].contractInputsValues["_value"] == str(int(100e18))
 

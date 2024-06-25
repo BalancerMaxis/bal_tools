@@ -33,14 +33,14 @@ def test_invalid_chain():
 
 def test_get_twap_price_token(subgraph, date_range):
     res = subgraph.get_twap_price_token(
-        addresses=["0xF1617882A71467534D14EEe865922de1395c9E89"],
+        addresses=["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"],
         chain=GqlChain.MAINNET,
         date_range=date_range,
     )
     assert isinstance(res.twap_price, Decimal)
     assert pytest.approx(res.twap_price, rel=Decimal(1e-2)) == Decimal(3743.80)
-    
-    
+
+
 def test_get_twap_prices(subgraph, date_range):
     prices = subgraph.get_twap_price_pool(
         pool_id="0x05ff47afada98a98982113758878f9a8b9fdda0a000000000000000000000645",
@@ -58,7 +58,7 @@ def test_get_twap_prices_custom_price_logic(subgraph, date_range, web3):
         chain=GqlChain.MAINNET,
         date_range=date_range,
         web3=web3,
-        block=20059322
+        block=20059322,
     )
     assert isinstance(prices.bpt_price, Decimal)
     assert pytest.approx(prices.bpt_price, rel=Decimal(1e-2)) == Decimal(3707.99)
@@ -73,7 +73,9 @@ def test_fetch_all_pools_info(subgraph):
 def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
     if chain in pool_snapshot_blocks.keys():
         block = pool_snapshot_blocks[chain]
-        res = subgraph_all_chains.get_balancer_pool_snapshots(block, pools_per_req=25, limit=25)
+        res = subgraph_all_chains.get_balancer_pool_snapshots(
+            block, pools_per_req=25, limit=25
+        )
 
         assert isinstance(res[0], PoolSnapshot)
         assert all(isinstance(pool.totalProtocolFeePaidInBPT, Decimal) for pool in res)

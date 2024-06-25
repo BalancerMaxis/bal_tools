@@ -51,7 +51,6 @@ def test_core_pools_attr(bal_pools_gauges):
     assert example in core_pools.keys()
 
 
-
 @pytest.mark.skip(reason="core pool list can change; examples may not be valid")
 def test_is_core_pool(bal_pools_gauges):
     """
