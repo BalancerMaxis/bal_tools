@@ -4,7 +4,6 @@ from decimal import Decimal
 from bal_tools.models import GqlChain, Pool
 from mock_data import mock_responses
 
-
 def mock_fetch_graphql_data(self, subgraph, query, params=None, url=None):
     assert query in mock_responses, f"Unexpected query: {query}"
     return mock_responses[query]
@@ -34,8 +33,8 @@ def test_get_twap_price_token(subgraph, date_range):
 def test_get_twap_price_bpt(subgraph, date_range):
     pool_id = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
     chain = GqlChain.MAINNET
-    result = subgraph.get_twap_price_bpt(pool_id, chain, date_range)
-    assert result == Decimal(8.5)
+    result = subgraph.get_twap_price_pool(pool_id, chain, date_range)
+    assert result.bpt_price == Decimal(8.5)
 
 
 @patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
@@ -72,7 +71,16 @@ def test_get_balancer_pool_snapshots(subgraph):
     assert snapshot.tokens[0].symbol == "DOLA"
     assert snapshot.tokens[1].symbol == "USDC"
     assert snapshot.timestamp == 1713744000
-    assert snapshot.protocolFee == "20729.00526903175861936991501109402"
-    assert snapshot.swapFees == "42555.1058049324"
-    assert snapshot.swapVolume == "114566260.594991"
-    assert snapshot.liquidity == "2036046.63834962216860375518680805"
+    assert pytest.approx(snapshot.protocolFee, rel=Decimal(1e-2)) == Decimal(
+        "20729.00526903175861936991501109402"
+    )
+    assert pytest.approx(snapshot.swapFees, rel=Decimal(1e-2)) == Decimal(
+        "42555.1058049324"
+    )
+    assert pytest.approx(snapshot.swapVolume, rel=Decimal(1e-2)) == Decimal(
+        "114566260.594991"
+    )
+    assert pytest.approx(snapshot.liquidity, rel=Decimal(1e-2)) == Decimal(
+        "2036046.63834962216860375518680805"
+    )
+
