@@ -2,11 +2,18 @@ from urllib.request import urlopen
 from urllib.parse import urlparse
 import os
 import re
+from datetime import datetime, timezone
+from decimal import Decimal
+from typing import Union, List, Callable, Dict
 
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
-
+from web3 import Web3
 from bal_addresses import AddrBook
+
+from typing import Union, List, Callable, Dict
+from .utils import get_abi, flatten_nested_dict
+from .models import *
 
 
 graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
@@ -24,11 +31,19 @@ AURA_SUBGRAPHS_BY_CHAIN = {
 
 
 class Subgraph:
-    def __init__(self, chain: str):
+    V3_URL = "https://api-v3.balancer.fi"
+
+    def __init__(self, chain: str = "mainnet"):
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
         self.subgraph_url = {}
+        
+        self.custom_price_logic: Dict[str, Callable] = {
+            # do not checksum
+            "0xf1617882a71467534d14eee865922de1395c9e89": self._saETH,
+            "0xfc87753df5ef5c368b5fba8d4c5043b77e8c5b39": self._aETH,
+        }
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
@@ -69,7 +84,7 @@ class Subgraph:
                                 found_magic_word = True
             return None
 
-    def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
+    def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None, url: str = None):
         """
         query a subgraph using a locally saved query
 
@@ -81,10 +96,12 @@ class Subgraph:
         - result of the query
         """
         # build the client
-        if self.subgraph_url.get(subgraph) is None:
-            self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
+        if not url:
+            if not self.subgraph_url.get(subgraph):
+                self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
+
         transport = RequestsHTTPTransport(
-            url=self.subgraph_url[subgraph],
+            url=url or self.subgraph_url[subgraph],
         )
         client = Client(transport=transport, fetch_schema_from_transport=True)
 
@@ -96,9 +113,13 @@ class Subgraph:
         return result
 
     def get_first_block_after_utc_timestamp(self, timestamp: int) -> int:
+        if timestamp > int(datetime.now().strftime("%s")):
+            timestamp = int(datetime.now().strftime("%s")) - 2000
+
         data = self.fetch_graphql_data(
-            "blocks", "first_block_after_ts", {"timestamp": int(timestamp)}
+            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp)-200, "timestamp_lt": int(timestamp) + 200}
         )
+        data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
         return int(data["blocks"][0]["number"])
 
     def get_twap_price_token(
@@ -117,7 +138,7 @@ class Subgraph:
 
         start_date_ts, end_date_ts = date_range[0], date_range[1]
 
-        current_ts = int(datetime.utcnow().timestamp())
+        current_ts = int(datetime.now(timezone.utc).timestamp())
         one_year_ago_ts = current_ts - 360 * 24 * 3600
 
         if not (one_year_ago_ts <= start_date_ts <= current_ts and one_year_ago_ts <= end_date_ts <= current_ts):

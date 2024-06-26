@@ -17,6 +17,10 @@ load_dotenv()
 exempt_chains = ["fantom", "mode", "linea", "fraxtal", "goerli"]
 chains = [chain for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"]) if chain not in exempt_chains]
 
+@pytest.fixture(scope="module")
+def web3():
+    return Web3(Web3.HTTPProvider(os.getenv("ETHNODEURL")))
+
 
 @pytest.fixture(scope="module", params=chains)
 def chain(request):
@@ -43,21 +47,17 @@ def subgraph():
 def aura(chain):
     return Aura(chain)
 
-
 @pytest.fixture(scope="module")
 def addr_book():
     return AddrBook("mainnet").flatbook
-
 
 @pytest.fixture(scope="module")
 def msig_name():
     return "multisigs/vote_incentive_recycling"
 
-
 @pytest.fixture(scope="module")
 def safe_tx_builder(msig_name) -> SafeTxBuilder:
     return SafeTxBuilder(msig_name)
-
 
 @pytest.fixture(scope="module")
 def erc20_abi():
@@ -68,8 +68,7 @@ def erc20_abi():
 def bribe_market_abi():
     with open("tests/abi/bribe_market.json", "r") as file:
         return json.load(file)
-
-
+    
 @pytest.fixture(scope="module")
 def pool_snapshot_blocks():
     return {
