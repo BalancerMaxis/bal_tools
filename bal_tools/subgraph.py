@@ -1,4 +1,5 @@
 from urllib.request import urlopen
+from urllib.parse import urlparse
 import os
 import re
 
@@ -48,7 +49,7 @@ class Subgraph:
         elif subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
-        # get subgraph url from production frontend
+        # get subgraph url from sdk config
         sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
         with urlopen(sdk_file) as f:
@@ -60,10 +61,13 @@ class Subgraph:
                             if found_magic_word:
                                 url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
                                 url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
-                                return url
+                                if urlparse(url).scheme in ['http', 'https']:
+                                    return url
+                                return None
                             if magic_word in str(line):
                                 # url is on next line, return it on the next iteration
                                 found_magic_word = True
+            return None
 
     def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
         """
