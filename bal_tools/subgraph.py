@@ -1,5 +1,7 @@
 from urllib.request import urlopen
 import os
+import re
+
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
@@ -57,6 +59,7 @@ class Subgraph:
                         for line in f:
                             if found_magic_word:
                                 url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
+                                url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
                                 return url
                             if magic_word in str(line):
                                 # url is on next line, return it on the next iteration
