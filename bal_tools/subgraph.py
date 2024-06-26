@@ -1,5 +1,7 @@
-from urllib.request import urlopen
 import os
+from urllib.error import HTTPError
+from urllib.request import urlopen
+
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
@@ -53,18 +55,22 @@ class Subgraph:
         # get subgraph url from production frontend
         frontend_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain}/index.ts"
         found_magic_word = False
-        with urlopen(frontend_file) as f:
-            for line in f:
-                if found_magic_word:
+        try:
+            with urlopen(frontend_file) as f:
+                for line in f:
+                    if found_magic_word:
 
-                    url = line.decode("utf-8").strip().strip(" ,'")
-                    return url
-                if magic_word + " " in str(line):
-                    # url is on same line
-                    return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+                        url = line.decode("utf-8").strip().strip(" ,'")
+                        return url
+                    if magic_word + " " in str(line):
+                        # url is on same line
+                        return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
+                    if magic_word in str(line):
+                        # url is on next line, return it on the next iteration
+                        found_magic_word = True
+        except HTTPError:
+            print(f"Could not retrieve subgraph url for {frontend_file}")
+            return None
 
     def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
         """
