@@ -40,15 +40,15 @@ class Subgraph:
         - https url of the subgraph
         """
         if subgraph == "core":
-            magic_word = "subgraph:"
+            magic_word = "subgraph:\n"
         elif subgraph == "gauges":
-            magic_word = "gaugesSubgraph:"
+            magic_word = "gaugesSubgraph:\n"
         elif subgraph == "blocks":
-            magic_word = "blockNumberSubgraph:"
+            magic_word = "blockNumberSubgraph:\n"
         elif subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
-        # get subgraph url from production frontend
+        # get subgraph url from sdk config
         sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
         with urlopen(sdk_file) as f:
