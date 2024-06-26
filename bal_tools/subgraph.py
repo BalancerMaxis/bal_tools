@@ -1,4 +1,5 @@
 from urllib.request import urlopen
+from urllib.parse import urlparse
 import os
 import re
 
@@ -40,11 +41,11 @@ class Subgraph:
         - https url of the subgraph
         """
         if subgraph == "core":
-            magic_word = "subgraph:\n"
+            magic_word = "subgraph:"
         elif subgraph == "gauges":
-            magic_word = "gaugesSubgraph:\n"
+            magic_word = "gaugesSubgraph:"
         elif subgraph == "blocks":
-            magic_word = "blockNumberSubgraph:\n"
+            magic_word = "blockNumberSubgraph:"
         elif subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
@@ -60,10 +61,13 @@ class Subgraph:
                             if found_magic_word:
                                 url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
                                 url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
-                                return url
+                                if urlparse(url).scheme in ['http', 'https']:
+                                    return url
+                                return None
                             if magic_word in str(line):
                                 # url is on next line, return it on the next iteration
                                 found_magic_word = True
+            return None
 
     def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
         """
