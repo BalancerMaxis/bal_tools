@@ -1,5 +1,7 @@
 from urllib.request import urlopen
 import os
+import re
+
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 
@@ -25,6 +27,7 @@ class Subgraph:
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
+        self.subgraph_url = {}
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
@@ -36,35 +39,31 @@ class Subgraph:
         returns:
         - https url of the subgraph
         """
-        chain = "gnosis-chain" if self.chain == "gnosis" else self.chain
-
         if subgraph == "core":
             magic_word = "subgraph:"
         elif subgraph == "gauges":
-            magic_word = "gauge:"
+            magic_word = "gaugesSubgraph:"
         elif subgraph == "blocks":
-            magic_word = "blocks:"
-            ## UI has no blocks subgraph for op
-            if chain == "optimism":
-                return "https://api.thegraph.com/subgraphs/name/iliaazhel/optimism-blocklytics"
+            magic_word = "blockNumberSubgraph:"
         elif subgraph == "aura":
-            return AURA_SUBGRAPHS_BY_CHAIN.get(chain, None)
+            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
         # get subgraph url from production frontend
-        frontend_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain}/index.ts"
+        sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
-        with urlopen(frontend_file) as f:
+        with urlopen(sdk_file) as f:
             for line in f:
-                if found_magic_word:
-
-                    url = line.decode("utf-8").strip().strip(" ,'")
-                    return url
-                if magic_word + " " in str(line):
-                    # url is on same line
-                    return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+                if '[Network.' in str(line):
+                    chain_detected = str(line).split('[Network.')[1].split(']')[0].lower()
+                    if chain_detected == self.chain:
+                        for line in f:
+                            if found_magic_word:
+                                url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
+                                url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
+                                return url
+                            if magic_word in str(line):
+                                # url is on next line, return it on the next iteration
+                                found_magic_word = True
 
     def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
         """
@@ -78,9 +77,10 @@ class Subgraph:
         - result of the query
         """
         # build the client
-        url = self.get_subgraph_url(subgraph)
+        if self.subgraph_url.get(subgraph) is None:
+            self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
         transport = RequestsHTTPTransport(
-            url=url,
+            url=self.subgraph_url[subgraph],
         )
         client = Client(transport=transport, fetch_schema_from_transport=True)
 
