@@ -42,7 +42,7 @@ class SafeTxBuilder:
         ).flatbook
         self.safe_address = self._resolve_address(safe_address)
         self.version = version
-        self.timestamp = timestamp if timestamp else datetime.utcnow().timestamp()
+        self.timestamp = timestamp if timestamp else datetime.now(datetime.UTC)
         self.tx_builder_version = tx_builder_version
         self.base_payload = self.load_template(TemplateType.BASE)
         self._load_payload_metadata()
