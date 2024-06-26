@@ -67,21 +67,26 @@ class Subgraph:
         # get subgraph url from sdk config
         sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
+        urls_reached = False
         with urlopen(sdk_file) as f:
             for line in f:
                 if '[Network.' in str(line):
                     chain_detected = str(line).split('[Network.')[1].split(']')[0].lower()
                     if chain_detected == self.chain:
                         for line in f:
-                            if found_magic_word:
-                                url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
-                                url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
-                                if urlparse(url).scheme in ['http', 'https']:
-                                    return url
-                                return None
-                            if magic_word in str(line):
-                                # url is on next line, return it on the next iteration
-                                found_magic_word = True
+                            if 'urls: {' in str(line) or urls_reached:
+                                urls_reached = True
+                                if '},' in str(line):
+                                    return None
+                                if found_magic_word:
+                                    url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
+                                    url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
+                                    if urlparse(url).scheme in ['http', 'https']:
+                                        return url
+                                    return None
+                                if magic_word in str(line):
+                                    # url is on next line, return it on the next iteration
+                                    found_magic_word = True
             return None
 
     def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None, url: str = None):
