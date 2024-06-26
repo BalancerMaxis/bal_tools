@@ -1,5 +1,5 @@
 from typing import Optional, Union
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 from bal_addresses import AddrBook
@@ -42,7 +42,7 @@ class SafeTxBuilder:
         ).flatbook
         self.safe_address = self._resolve_address(safe_address)
         self.version = version
-        self.timestamp = timestamp if timestamp else datetime.utcnow().timestamp()
+        self.timestamp = timestamp if timestamp else datetime.now(timezone.utc)
         self.tx_builder_version = tx_builder_version
         self.base_payload = self.load_template(TemplateType.BASE)
         self._load_payload_metadata()
@@ -69,7 +69,7 @@ class SafeTxBuilder:
     def _load_payload_metadata(self):
         self.base_payload.version = self.version
         self.base_payload.chainId = self.chain_id
-        self.base_payload.createdAt = int(self.timestamp)
+        self.base_payload.createdAt = int(self.timestamp.timestamp())
         self.base_payload.meta.txBuilderVersion = self.tx_builder_version
         self.base_payload.meta.createdFromSafeAddress = self.safe_address
 

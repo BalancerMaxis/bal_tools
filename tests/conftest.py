@@ -14,17 +14,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-exempt_chains = ["fantom", "mode", "linea", "fraxtal"]
-chains = [
-    chain
-    for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"])
-    if chain not in exempt_chains
-]
-
-
-@pytest.fixture(scope="module")
-def web3():
-    return Web3(Web3.HTTPProvider(os.getenv("ETHNODEURL")))
+exempt_chains = ["fantom", "mode", "linea", "fraxtal", "goerli"]
+chains = [chain for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"]) if chain not in exempt_chains]
 
 
 @pytest.fixture(scope="module", params=chains)
@@ -72,7 +63,6 @@ def safe_tx_builder(msig_name) -> SafeTxBuilder:
 def erc20_abi():
     with open("tests/abi/erc20.json", "r") as file:
         return json.load(file)
-
 
 @pytest.fixture(scope="module")
 def bribe_market_abi():

@@ -1,45 +1,34 @@
 from urllib.request import urlopen
+from urllib.parse import urlparse
 import os
+import re
+
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
-from typing import Union, List, Callable, Dict
-from decimal import Decimal
-from bal_addresses import AddrBook
-from web3 import Web3
-from datetime import datetime
 
-from .utils import get_abi, flatten_nested_dict
-from .models import *
+from bal_addresses import AddrBook
 
 
 graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
 
 AURA_SUBGRAPHS_BY_CHAIN = {
-    "mainnet": "https://graph.data.aura.finance/subgraphs/name/aura/aura-mainnet-v2-1",
-    "arbitrum": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-arbitrum",
-    "optimism": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-optimism",
-    "gnosis": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-gnosis-chain",
-    "base": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-base",
-    "polygon": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-polygon",
-    "zkevm": "https://api.studio.thegraph.com/query/69982/aura-finance-zkevm/version/latest",
-    "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/version/v0.0.1/api",
+    "mainnet": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-mainnet/api",
+    "arbitrum": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-arbitrum/api",
+    "optimism": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-optimism/api",
+    "gnosis": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-gnosis/api",
+    "base": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-base/api",
+    "polygon": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-polygon/api",
+    "zkevm": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-zkevm/api",
+    "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
 }
 
 
 class Subgraph:
-    V3_URL = "https://api-v3.balancer.fi"
-
-    def __init__(self, chain: str = "mainnet"):
-        chain = chain.lower()
+    def __init__(self, chain: str):
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
-
-        self.custom_price_logic: Dict[str, Callable] = {
-            # do not checksum
-            "0xf1617882a71467534d14eee865922de1395c9e89": self._saETH,
-            "0xfc87753df5ef5c368b5fba8d4c5043b77e8c5b39": self._aETH,
-        }
+        self.subgraph_url = {}
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
@@ -51,41 +40,36 @@ class Subgraph:
         returns:
         - https url of the subgraph
         """
-        chain = "gnosis-chain" if self.chain == "gnosis" else self.chain
-        
         if subgraph == "core":
-            # UI has outdated core subgraph for polygon
-            if chain == "polygon":
-                return "https://api.thegraph.com/subgraphs/name/balancer-labs/balancer-polygon-v2"
             magic_word = "subgraph:"
         elif subgraph == "gauges":
-            magic_word = "gauge:"
+            magic_word = "gaugesSubgraph:"
         elif subgraph == "blocks":
-            magic_word = "blocks:"
-            ## UI has no blocks subgraph for op or gnosis
-            if chain == "optimism":
-                return "https://api.thegraph.com/subgraphs/name/iliaazhel/optimism-blocklytics"
-            elif chain == "gnosis-chain":
-                return "https://api.thegraph.com/subgraphs/name/rebase-agency/gnosis-chain-blocks"
+            magic_word = "blockNumberSubgraph:"
         elif subgraph == "aura":
-            return AURA_SUBGRAPHS_BY_CHAIN.get(chain, None)
+            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
-        # get subgraph url from production frontend
-        frontend_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain}/index.ts"
+        # get subgraph url from sdk config
+        sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
-        with urlopen(frontend_file) as f:
+        with urlopen(sdk_file) as f:
             for line in f:
-                if found_magic_word:
-                    url = line.decode("utf-8").strip().strip(" ,'")
-                    return url
-                if magic_word + " " in str(line):
-                    # url is on same line
-                    return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+                if '[Network.' in str(line):
+                    chain_detected = str(line).split('[Network.')[1].split(']')[0].lower()
+                    if chain_detected == self.chain:
+                        for line in f:
+                            if found_magic_word:
+                                url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
+                                url = re.sub(r'(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+', '', url)
+                                if urlparse(url).scheme in ['http', 'https']:
+                                    return url
+                                return None
+                            if magic_word in str(line):
+                                # url is on next line, return it on the next iteration
+                                found_magic_word = True
+            return None
 
-    def fetch_graphql_data(self, subgraph, query, params: dict = None, url: str = None):
+    def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
         """
         query a subgraph using a locally saved query
 
@@ -97,11 +81,10 @@ class Subgraph:
         - result of the query
         """
         # build the client
-        if not url:
-            url = self.get_subgraph_url(subgraph)
-
+        if self.subgraph_url.get(subgraph) is None:
+            self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
         transport = RequestsHTTPTransport(
-            url=url,
+            url=self.subgraph_url[subgraph],
         )
         client = Client(transport=transport, fetch_schema_from_transport=True)
 
@@ -113,13 +96,9 @@ class Subgraph:
         return result
 
     def get_first_block_after_utc_timestamp(self, timestamp: int) -> int:
-        if timestamp > int(datetime.now().strftime("%s")):
-            timestamp = int(datetime.now().strftime("%s")) - 2000
-
         data = self.fetch_graphql_data(
-            "blocks", "first_block_after_ts", {"timestamp_gt": int(timestamp)-200, "timestamp_lt": int(timestamp) + 200}
+            "blocks", "first_block_after_ts", {"timestamp": int(timestamp)}
         )
-        data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
         return int(data["blocks"][0]["number"])
 
     def get_twap_price_token(
