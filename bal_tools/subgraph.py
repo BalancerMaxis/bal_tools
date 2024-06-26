@@ -11,14 +11,14 @@ from bal_addresses import AddrBook
 graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
 
 AURA_SUBGRAPHS_BY_CHAIN = {
-    "mainnet": "https://graph.data.aura.finance/subgraphs/name/aura/aura-mainnet-v2-1",
-    "arbitrum": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-arbitrum",
-    "optimism": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-optimism",
-    "gnosis": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-gnosis-chain",
-    "base": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-base",
-    "polygon": "https://api.thegraph.com/subgraphs/name/aurafinance/aura-finance-polygon",
-    "zkevm": "https://api.studio.thegraph.com/query/69982/aura-finance-zkevm/version/latest",
-    "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/version/v0.0.1/api",
+    "mainnet": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-mainnet/api",
+    "arbitrum": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-arbitrum/api",
+    "optimism": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-optimism/api",
+    "gnosis": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-gnosis/api",
+    "base": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-base/api",
+    "polygon": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-polygon/api",
+    "zkevm": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-zkevm/api",
+    "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
 }
 
 
