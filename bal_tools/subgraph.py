@@ -25,6 +25,7 @@ class Subgraph:
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
+        self.subgraph_url = {}
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
@@ -42,9 +43,6 @@ class Subgraph:
             magic_word = "gaugesSubgraph:"
         elif subgraph == "blocks":
             magic_word = "blockNumberSubgraph:"
-            ## UI has no blocks subgraph for op
-            if self.chain == "optimism":
-                return "https://api.thegraph.com/subgraphs/name/iliaazhel/optimism-blocklytics"
         elif subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
@@ -58,7 +56,7 @@ class Subgraph:
                     if chain_detected == self.chain:
                         for line in f:
                             if found_magic_word:
-                                url = line.decode("utf-8").strip().strip(" ,'")
+                                url = line.decode("utf-8").strip().split(',')[0].strip(" ,'")
                                 return url
                             if magic_word in str(line):
                                 # url is on next line, return it on the next iteration
@@ -76,9 +74,10 @@ class Subgraph:
         - result of the query
         """
         # build the client
-        url = self.get_subgraph_url(subgraph)
+        if self.subgraph_url.get(subgraph) is None:
+            self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
         transport = RequestsHTTPTransport(
-            url=url,
+            url=self.subgraph_url[subgraph],
         )
         client = Client(transport=transport, fetch_schema_from_transport=True)
 
