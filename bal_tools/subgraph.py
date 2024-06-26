@@ -36,35 +36,33 @@ class Subgraph:
         returns:
         - https url of the subgraph
         """
-        chain = "gnosis-chain" if self.chain == "gnosis" else self.chain
-
         if subgraph == "core":
             magic_word = "subgraph:"
         elif subgraph == "gauges":
-            magic_word = "gauge:"
+            magic_word = "gaugesSubgraph:"
         elif subgraph == "blocks":
-            magic_word = "blocks:"
+            magic_word = "blockNumberSubgraph:"
             ## UI has no blocks subgraph for op
-            if chain == "optimism":
+            if self.chain == "optimism":
                 return "https://api.thegraph.com/subgraphs/name/iliaazhel/optimism-blocklytics"
         elif subgraph == "aura":
-            return AURA_SUBGRAPHS_BY_CHAIN.get(chain, None)
+            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
         # get subgraph url from production frontend
-        frontend_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain}/index.ts"
+        sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
-        with urlopen(frontend_file) as f:
+        with urlopen(sdk_file) as f:
             for line in f:
-                if found_magic_word:
-
-                    url = line.decode("utf-8").strip().strip(" ,'")
-                    return url
-                if magic_word + " " in str(line):
-                    # url is on same line
-                    return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+                if '[Network.' in str(line):
+                    chain_detected = str(line).split('[Network.')[1].split(']')[0].lower()
+                    if chain_detected == self.chain:
+                        for line in f:
+                            if found_magic_word:
+                                url = line.decode("utf-8").strip().strip(" ,'")
+                                return url
+                            if magic_word in str(line):
+                                # url is on next line, return it on the next iteration
+                                found_magic_word = True
 
     def fetch_graphql_data(self, subgraph: str, query: str, params: dict = None):
         """
