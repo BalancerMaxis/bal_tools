@@ -26,10 +26,12 @@ class TWAPResult:
     address: str
     twap_price: Optional[Decimal]
 
+
 @dataclass
 class TwapPrices:
     bpt_price: Decimal
     token_prices: List[TWAPResult]
+
 
 class Token(BaseModel):
     address: str
@@ -73,19 +75,20 @@ class PropData(BaseModel):
 class TokenFee(BaseModel):
     symbol: str
     address: str
-    paidProtocolFees: Optional[Decimal] = Field(None, alias='paidProtocolFees')
+    paidProtocolFees: Optional[Decimal] = Field(None, alias="paidProtocolFees")
 
-    @validator('paidProtocolFees', pre=True, always=True)
+    @validator("paidProtocolFees", pre=True, always=True)
     def cast_fees(cls, v):
-        if v is None or v == '0':
+        if v is None or v == "0":
             return Decimal(0)
         return Decimal(v)
-    
-    @validator('symbol', pre=True, always=True)
+
+    @validator("symbol", pre=True, always=True)
     def validate_symbol(cls, v):
         if not isinstance(v, str) or not v:
-            return ''
+            return ""
         return v
+
 
 class PoolSnapshot(BaseModel):
     timestamp: int
@@ -98,19 +101,19 @@ class PoolSnapshot(BaseModel):
     symbol: str
     totalProtocolFeePaidInBPT: Decimal = Field(default=Decimal(0))
     tokens: List[TokenFee]
-    
-    @validator('totalProtocolFeePaidInBPT', pre=True, always=True)
+
+    @validator("totalProtocolFeePaidInBPT", pre=True, always=True)
     def set_default_total_fee(cls, v):
         if v is None:
             return Decimal(0)
         return Decimal(v)
 
-    @validator('protocolFee', 'swapFees', 'swapVolume', 'liquidity', pre=True)
+    @validator("protocolFee", "swapFees", "swapVolume", "liquidity", pre=True)
     def str_to_decimal(cls, v):
         return Decimal(v)
 
-    @validator('symbol', pre=True, always=True)
+    @validator("symbol", pre=True, always=True)
     def validate_symbol(cls, v):
         if not isinstance(v, str) or not v:
-            return ''
+            return ""
         return v

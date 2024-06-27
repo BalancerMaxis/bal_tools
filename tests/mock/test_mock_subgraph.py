@@ -4,6 +4,7 @@ from decimal import Decimal
 from bal_tools.models import GqlChain, Pool
 from mock_data import mock_responses
 
+
 def mock_fetch_graphql_data(self, subgraph, query, params=None, url=None):
     assert query in mock_responses, f"Unexpected query: {query}"
     return mock_responses[query]
@@ -43,9 +44,7 @@ def test_fetch_all_pools_info(subgraph):
     assert isinstance(result[0], Pool)
     assert len(result) == 1
     pool = result[0]
-    assert (
-        pool.id == "0xca8ecd05a289b1fbc2e0eaec07360c4bfec07b6100020000000000000000051d"
-    )
+    assert pool.id == "0xca8ecd05a289b1fbc2e0eaec07360c4bfec07b6100020000000000000000051d"
     assert pool.address == "0xca8ecd05a289b1fbc2e0eaec07360c4bfec07b61"
     assert pool.chain == "ARBITRUM"
     assert pool.type == "GYRO"
@@ -83,4 +82,3 @@ def test_get_balancer_pool_snapshots(subgraph):
     assert pytest.approx(snapshot.liquidity, rel=Decimal(1e-2)) == Decimal(
         "2036046.63834962216860375518680805"
     )
-

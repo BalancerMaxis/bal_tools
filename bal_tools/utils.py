@@ -21,7 +21,7 @@ def is_address(address: str):
 
 
 def get_abi(contract_name: str) -> Union[Dict, List[Dict]]:
-    abi_path = resource_filename(__name__, f'abi/{contract_name}.json')
+    abi_path = resource_filename(__name__, f"abi/{contract_name}.json")
     with open(abi_path) as f:
         return json.load(f)
 

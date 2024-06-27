@@ -1,7 +1,13 @@
 import pytest
 from decimal import Decimal
 
-from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot, DateRange
+from bal_tools.subgraph import (
+    Subgraph,
+    GqlChain,
+    Pool,
+    PoolSnapshot,
+    DateRange,
+)
 
 
 @pytest.fixture(scope="module")

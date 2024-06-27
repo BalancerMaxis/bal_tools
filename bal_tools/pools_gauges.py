@@ -49,14 +49,10 @@ class BalPoolsGauges:
                 results[user_address] = float(share["balance"])
         return results
 
-    def get_gauge_deposit_shares(
-        self, gauge_address: str, block: int
-    ) -> Dict[str, int]:
+    def get_gauge_deposit_shares(self, gauge_address: str, block: int) -> Dict[str, int]:
         gauge_address = to_checksum_address(gauge_address)
         variables = {"gaugeAddress": gauge_address, "block": int(block)}
-        data = self.subgraph.fetch_graphql_data(
-            "gauges", "fetch_gauge_shares", variables
-        )
+        data = self.subgraph.fetch_graphql_data("gauges", "fetch_gauge_shares", variables)
         results = {}
         if "gaugeShares" in data:
             for share in data["gaugeShares"]:
@@ -114,7 +110,8 @@ class BalPoolsGauges:
             return data["joinExits"][0]["timestamp"]
         except:
             raise NoResultError(
-                f"empty or malformed results looking for last join/exit on pool {self.chain}:{pool_id}"
+                "empty or malformed results looking for last join/exit on"
+                f" pool {self.chain}:{pool_id}"
             )
 
     def get_liquid_pools_with_protocol_yield_fee(self) -> dict:
@@ -133,9 +130,7 @@ class BalPoolsGauges:
         dictionary of the format {pool_id: symbol}
         """
         filtered_pools = {}
-        data = self.subgraph.fetch_graphql_data(
-            "core", "liquid_pools_protocol_yield_fee"
-        )
+        data = self.subgraph.fetch_graphql_data("core", "liquid_pools_protocol_yield_fee")
         try:
             for pool in data["pools"]:
                 filtered_pools[pool["id"]] = pool["symbol"]

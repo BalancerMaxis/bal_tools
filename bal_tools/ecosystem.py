@@ -1,7 +1,11 @@
 from collections import defaultdict
 import re
 from typing import Dict, List
-from .errors import UnexpectedListLengthError, MultipleMatchesError, NoResultError
+from .errors import (
+    UnexpectedListLengthError,
+    MultipleMatchesError,
+    NoResultError,
+)
 from web3 import Web3
 import requests
 from .subgraph import Subgraph
@@ -56,7 +60,9 @@ class Aura:
 
             if gauge_address in aura_pid_by_gauge:
                 raise MultipleMatchesError(
-                    f"Gauge with address{gauge_address} already found with PID {aura_pid_by_gauge[gauge_address]} when trying to insert new PID {pid}"
+                    f"Gauge with address{gauge_address} already found with PID"
+                    f" {aura_pid_by_gauge[gauge_address]} when trying to"
+                    f" insert new PID {pid}"
                 )
             aura_pid_by_gauge[gauge_address] = pid
         return aura_pid_by_gauge
@@ -117,7 +123,8 @@ class Aura:
         else:
             if len(result) != 1:
                 raise UnexpectedListLengthError(
-                    f"Got a list result with something other than 1 member when compiling aura PID mapping: {result}"
+                    "Got a list result with something other than 1 member"
+                    f" when compiling aura PID mapping: {result}"
                 )
             return result[0]
 

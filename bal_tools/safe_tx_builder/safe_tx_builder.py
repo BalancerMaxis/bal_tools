@@ -37,9 +37,7 @@ class SafeTxBuilder:
         tx_builder_version: str,
     ):
         self.chain_id = chain_id
-        self.addr_book = AddrBook(
-            AddrBook.chain_names_by_id[int(self.chain_id)]
-        ).flatbook
+        self.addr_book = AddrBook(AddrBook.chain_names_by_id[int(self.chain_id)]).flatbook
         self.safe_address = self._resolve_address(safe_address)
         self.version = version
         self.timestamp = timestamp if timestamp else datetime.now(timezone.utc)

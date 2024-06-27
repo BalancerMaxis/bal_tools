@@ -43,8 +43,14 @@ MOCK_POOL_TOKENS = {
     "poolGetPool": {
         "dynamicData": {"totalShares": "1000"},
         "poolTokens": [
-            {"address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2", "balance": "10"},
-            {"address": "0xba100000625a3754423978a60c9317c58a424e3D", "balance": "20"},
+            {
+                "address": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+                "balance": "10",
+            },
+            {
+                "address": "0xba100000625a3754423978a60c9317c58a424e3D",
+                "balance": "20",
+            },
         ],
     }
 }
@@ -87,7 +93,9 @@ MOCK_POOL_SNAPSHOTS = {
         {
             "pool": {
                 "address": "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea6",
-                "id": "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea6000200000000000000000426",
+                "id": (
+                    "0xff4ce5aaab5a627bf82f4a571ab1ce94aa365ea6000200000000000000000426"
+                ),
                 "symbol": "DOLA-USDC BSP",
                 "totalProtocolFeePaidInBPT": None,
                 "tokens": [

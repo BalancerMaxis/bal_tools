@@ -5,7 +5,11 @@ from bal_tools.safe_tx_builder.models import BasePayload
 
 
 def test_safe_contract(
-    safe_tx_builder: SafeTxBuilder, erc20_abi, bribe_market_abi, addr_book, msig_name
+    safe_tx_builder: SafeTxBuilder,
+    erc20_abi,
+    bribe_market_abi,
+    addr_book,
+    msig_name,
 ):
     usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
     bribe_market_address = "0x45Bc37b18E73A42A4a826357a8348cDC042cCBBc"
