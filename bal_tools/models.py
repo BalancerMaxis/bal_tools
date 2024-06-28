@@ -2,7 +2,7 @@ from typing import Optional, List, Tuple
 from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
-from pydantic import BaseModel, validator, Field
+from pydantic import BaseModel, field_validator, model_validator, Field
 
 
 class GqlChain(Enum):
@@ -77,13 +77,15 @@ class TokenFee(BaseModel):
     address: str
     paidProtocolFees: Optional[Decimal] = Field(None, alias="paidProtocolFees")
 
-    @validator("paidProtocolFees", pre=True, always=True)
+    @field_validator("paidProtocolFees", mode="before")
+    @classmethod
     def cast_fees(cls, v):
         if v is None or v == "0":
             return Decimal(0)
         return Decimal(v)
 
-    @validator("symbol", pre=True, always=True)
+    @field_validator("symbol", mode="before")
+    @classmethod
     def validate_symbol(cls, v):
         if not isinstance(v, str) or not v:
             return ""
@@ -102,18 +104,29 @@ class PoolSnapshot(BaseModel):
     totalProtocolFeePaidInBPT: Decimal = Field(default=Decimal(0))
     tokens: List[TokenFee]
 
-    @validator("totalProtocolFeePaidInBPT", pre=True, always=True)
+    @field_validator("totalProtocolFeePaidInBPT", mode="before")
+    @classmethod
     def set_default_total_fee(cls, v):
         if v is None:
             return Decimal(0)
         return Decimal(v)
 
-    @validator("protocolFee", "swapFees", "swapVolume", "liquidity", pre=True)
+    @field_validator("protocolFee", "swapFees", "swapVolume", "liquidity", mode="before")
+    @classmethod
     def str_to_decimal(cls, v):
         return Decimal(v)
 
-    @validator("symbol", pre=True, always=True)
+    @field_validator("symbol", mode="before")
+    @classmethod
     def validate_symbol(cls, v):
         if not isinstance(v, str) or not v:
             return ""
         return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def validate_model(cls, values):
+        for field in ["protocolFee", "swapFees", "swapVolume", "liquidity"]:
+            if field in values:
+                values[field] = cls.str_to_decimal(values[field])
+        return values

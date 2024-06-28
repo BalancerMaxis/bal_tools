@@ -58,7 +58,7 @@ class SafeContract:
         tx.value = str(kwargs.get("value", "0"))
 
         if not func.inputs:
-            tx.contractInputsValues = None
+            tx.contractInputsValues = None  # type: ignore
 
         for arg, input_type in zip(args, func.inputs):
             if input_type.type == "address":

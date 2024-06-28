@@ -1,5 +1,5 @@
-from pydantic import BaseModel, Field, root_validator
-from typing import List, Optional, Union
+from pydantic import BaseModel, Field
+from typing import List, Optional, Dict, Any
 from datetime import datetime
 from enum import Enum
 
@@ -15,8 +15,14 @@ class Meta(BaseModel):
     )
 
 
+class InputType(BaseModel):
+    name: str = Field(default="")
+    type: str = Field(default="")
+    internalType: str = Field(default="")
+
+
 class ContractMethod(BaseModel):
-    inputs: List[dict] = Field(default_factory=list)
+    inputs: List[InputType] = Field(default_factory=list)
     name: str = Field(default="")
     payable: bool = Field(default=False)
 
@@ -26,13 +32,7 @@ class Transaction(BaseModel):
     value: str = Field(default="0")
     data: Optional[str] = Field(default=None)
     contractMethod: ContractMethod = Field(default_factory=ContractMethod)
-    contractInputsValues: dict = Field(default_factory=dict)
-
-
-class InputType(BaseModel):
-    name: str = Field(default="")
-    type: str = Field(default="")
-    internalType: str = Field(default="")
+    contractInputsValues: Dict[str, Any] = Field(default_factory=dict)
 
 
 class BasePayload(BaseModel):
