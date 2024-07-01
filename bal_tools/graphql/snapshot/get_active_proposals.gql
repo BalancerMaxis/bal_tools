@@ -1,0 +1,27 @@
+query GetActiveProposals($first: Int!, $skip: Int!, $space: String!) {
+  proposals (
+    first: $first,
+    skip: $skip,
+    where: {
+      space_in: [$space],
+      state: "closed",
+      network_in: ["1"]
+    },
+    orderBy: "created",
+    orderDirection: asc
+  ) {
+    id
+    title
+    body
+    start
+    end
+    snapshot
+    choices
+    network
+    state
+    space {
+      id
+      name
+    }
+  }
+}
