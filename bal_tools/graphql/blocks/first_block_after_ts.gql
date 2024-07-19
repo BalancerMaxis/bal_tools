@@ -1,9 +1,9 @@
-query FirstBlockAfterTimestamp($timestamp: BigInt) {
+query FirstBlockAfterTimestamp($timestamp_gt: BigInt, $timestamp_lt: BigInt) {
   blocks(
     first: 1
     orderBy: number
     orderDirection: asc
-    where: { timestamp_gt: $timestamp }
+    where: { timestamp_gt: $timestamp_gt, timestamp_lt: $timestamp_lt}
   ) {
     number
     timestamp

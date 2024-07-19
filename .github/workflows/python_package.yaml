@@ -16,7 +16,6 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
-      # You can test your matrix by printing the current Python version
       - name: Display Python version
         run: python -c "import sys; print(sys.version)"
       - name: Install dependencies
@@ -24,6 +23,8 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r bal_tools/requirements.txt
       - name: Test with pytest
+        env:
+          ETHNODEURL: ${{ secrets.ETHNODEURL }}
         run: |
           pip install -r bal_tools/requirements-dev.txt
           pytest
