@@ -23,9 +23,7 @@ class SafeContract:
         if self.abi and hasattr(self.abi, "functions"):
             for func in self.abi.functions:
                 if func.name == attribute:
-                    return lambda *args, **kwargs: self.call_function(
-                        func, args, kwargs
-                    )
+                    return lambda *args, **kwargs: self.call_function(func, args, kwargs)
         raise AttributeError(f"No function named {attribute} in contract ABI")
 
     def _load_abi(self, abi: dict = None, file_path: dict = None) -> ContractABI:
@@ -60,7 +58,7 @@ class SafeContract:
         tx.value = str(kwargs.get("value", "0"))
 
         if not func.inputs:
-            tx.contractInputsValues = None
+            tx.contractInputsValues = None  # type: ignore
 
         for arg, input_type in zip(args, func.inputs):
             if input_type.type == "address":

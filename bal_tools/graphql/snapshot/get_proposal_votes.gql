@@ -1,0 +1,19 @@
+query GetProposalVotes($first: Int!, $skip: Int!, $snapshot_id: String!, $voter: String!, $space: String!) {
+  votes(
+    first: $first,
+    skip: $skip,
+    where: {
+      space_in: [$space],
+      proposal_in: [$snapshot_id],
+      voter: $voter
+    },
+    orderBy: "created",
+    orderDirection: asc
+  ) {
+    voter
+    proposal {
+      id
+    }
+    choice
+  }
+}
