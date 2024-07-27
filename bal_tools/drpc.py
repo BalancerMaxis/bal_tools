@@ -10,14 +10,11 @@ class Web3RpcByChain:
     def __init__(self, DRPC_KEY):
         self.DRPC_KEY = DRPC_KEY
         self.w3_by_chain = {}
-        for chain in AddrBook.chain_ids_by_name.keys():
-            try:
-                w3 = Web3Rpc(chain, DRPC_KEY)
-                self.w3_by_chain[chain] = w3
-            except ConnectionError as e:
-                print(f"Skipping chain {chain} due to connection error: {e}")
 
     def __getitem__(self, chain):
+        if chain not in self.w3_by_chain:
+            w3 = Web3Rpc(chain, self.DRPC_KEY)
+            self.w3_by_chain[chain] = w3
         return self.w3_by_chain[chain]
 
     def __setitem__(self, chain, value):
