@@ -9,31 +9,37 @@ DRPC_NAME_OVERRIDES = {
 class Web3RpcByChain:
     def __init__(self, DRPC_KEY):
         self.DRPC_KEY = DRPC_KEY
-        self.w3_by_chain = {}
+        self._w3_by_chain = {}
 
     def __getitem__(self, chain):
-        if chain not in self.w3_by_chain:
+        return self._get_or_create_w3(chain)
+
+    def __getattr__(self, chain):
+        return self._get_or_create_w3(chain)
+
+    def _get_or_create_w3(self, chain):
+        if chain not in self._w3_by_chain:
             w3 = Web3Rpc(chain, self.DRPC_KEY)
-            self.w3_by_chain[chain] = w3
-        return self.w3_by_chain[chain]
+            self._w3_by_chain[chain] = w3
+        return self._w3_by_chain[chain]
 
     def __setitem__(self, chain, value):
-        self.w3_by_chain[chain] = value
+        self._w3_by_chain[chain] = value
 
     def __delitem__(self, chain):
-        del self.w3_by_chain[chain]
+        del self._w3_by_chain[chain]
 
     def __iter__(self):
-        return iter(self.w3_by_chain)
+        return iter(self._w3_by_chain)
 
     def keys(self):
-        return self.w3_by_chain.keys()
+        return self._w3_by_chain.keys()
 
     def values(self):
-        return self.w3_by_chain.values()
+        return self._w3_by_chain.values()
 
     def items(self):
-        return self.w3_by_chain.items()
+        return self._w3_by_chain.items()
 
 class Web3Rpc:
     def __init__(self, chain, DRPC_KEY):
