@@ -91,3 +91,8 @@ def pool_snapshot_blocks():
         "avalanche": 30000000,
         "zkevm": 1200000,
     }
+
+
+@pytest.fixture(scope="module")
+def DRPC_KEY():
+    return os.getenv("DRPC_KEY")
