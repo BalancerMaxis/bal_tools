@@ -17,7 +17,7 @@ def is_address(address: str):
     if hasattr(Web3, "isAddress"):
         return Web3.isAddress(address)
     if hasattr(Web3, "is_address"):
-        return Web3.isAddress(address)
+        return Web3.is_address(address)
 
 
 def get_abi(contract_name: str) -> Union[Dict, List[Dict]]:

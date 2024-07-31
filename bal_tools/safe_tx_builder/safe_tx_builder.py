@@ -3,9 +3,9 @@ from datetime import datetime, timezone
 import os
 
 from bal_addresses import AddrBook
-from web3 import Web3
 
 from .models import *
+from ..utils import is_address
 
 
 class SafeTxBuilder:
@@ -59,7 +59,7 @@ class SafeTxBuilder:
         return model.model_validate_json(file_content)
 
     def _resolve_address(self, identifier: str) -> str:
-        if Web3.is_address(identifier):
+        if is_address(identifier):
             return identifier
 
         return self.addr_book[identifier]

@@ -21,9 +21,17 @@ class SafeContract:
 
     def __getattr__(self, attribute):
         if self.abi and hasattr(self.abi, "functions"):
-            for func in self.abi.functions:
-                if func.name == attribute:
-                    return lambda *args, **kwargs: self.call_function(func, args, kwargs)
+            funcs_found = [f for f in self.abi.functions if f.name == attribute]
+            n_found = len(funcs_found)
+
+            if n_found == 1:
+                return lambda *args, **kwargs: self.call_function(funcs_found[0], args, kwargs)
+            elif n_found > 1:
+                return lambda *args, **kwargs: self.call_function(
+                    next(f for f in funcs_found if len(f.inputs) == len(args)),
+                    args, kwargs
+                )
+
         raise AttributeError(f"No function named {attribute} in contract ABI")
 
     def _load_abi(self, abi: dict = None, file_path: dict = None) -> ContractABI:
