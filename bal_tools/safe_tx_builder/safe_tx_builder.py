@@ -10,33 +10,42 @@ from ..utils import is_address
 
 class SafeTxBuilder:
     _instance = None
+    _last_config = None
 
     def __new__(
         cls,
         safe_address: Optional[str] = None,
-        chain_id: str = "1",
+        chain_name: str = "mainnet",
         version: str = "1.0",
         timestamp: Optional[str] = None,
         tx_builder_version: str = "1.16.3",
     ):
         if cls._instance is None:
-            if safe_address is None:
-                raise ValueError("`safe_address` is required")
             cls._instance = super(SafeTxBuilder, cls).__new__(cls)
-            cls._instance._initialize(
-                safe_address, chain_id, version, timestamp, tx_builder_version
-            )
+            cls._instance._initialized = False
+        
+        if safe_address is not None or cls._last_config is None:
+            cls._last_config = {
+                'safe_address': safe_address,
+                'chain_name': chain_name,
+                'version': version,
+                'timestamp': timestamp,
+                'tx_builder_version': tx_builder_version
+            }
+            cls._instance._initialize(**cls._last_config)
+        
         return cls._instance
 
     def _initialize(
         self,
-        safe_address: str,
-        chain_id: str,
+        safe_address: Optional[str],
+        chain_name: str,
         version: str,
         timestamp: Optional[str],
         tx_builder_version: str,
     ):
-        self.chain_id = chain_id
+        self.chain_name = chain_name
+        self.chain_id = str(AddrBook.chain_ids_by_name[chain_name])
         self.addr_book = AddrBook(AddrBook.chain_names_by_id[int(self.chain_id)]).flatbook
         self.safe_address = self._resolve_address(safe_address)
         self.version = version
@@ -44,6 +53,7 @@ class SafeTxBuilder:
         self.tx_builder_version = tx_builder_version
         self.base_payload = self.load_template(TemplateType.BASE)
         self._load_payload_metadata()
+        self._initialized = True
 
     @staticmethod
     def load_template(

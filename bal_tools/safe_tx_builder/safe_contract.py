@@ -16,6 +16,8 @@ class SafeContract:
         abi_file_path: str = None,
     ):
         self.tx_builder = SafeTxBuilder()
+        if not self.tx_builder._initialized:
+            raise RuntimeError("SafeTxBuilder must be initialized before using SafeContract")
         self.address = self.tx_builder._resolve_address(address)
         self.abi = self._load_abi(abi, abi_file_path)
 
