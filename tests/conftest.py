@@ -79,6 +79,11 @@ def bribe_market_abi():
     with open("tests/abi/bribe_market.json", "r") as file:
         return json.load(file)
 
+@pytest.fixture(scope="module")
+def bridge_abi():
+    with open("tests/abi/bridge.json", "r") as file:
+        return json.load(file)
+
 
 @pytest.fixture(scope="module")
 def pool_snapshot_blocks():

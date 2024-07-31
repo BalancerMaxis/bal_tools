@@ -26,7 +26,7 @@ def test_safe_contract(
         2,
     )
 
-    payload = safe_tx_builder.output_payload("tests/payload_outputs/test.json")
+    payload = safe_tx_builder.output_payload("tests/payload_outputs/bribe.json")
 
     assert safe_tx_builder.safe_address == addr_book[msig_name]
 
@@ -54,3 +54,13 @@ def test_safe_contract(
     assert payload.transactions[1].contractInputsValues["_amount"] == str(int(1e18))
     assert payload.transactions[1].contractInputsValues["_maxTokensPerVote"] == str(0)
     assert payload.transactions[1].contractInputsValues["_periods"] == str(2)
+
+
+def test_multiple_functions_with_same_name(bridge_abi):
+    builder = SafeTxBuilder("multisigs/dao")
+    bridge = SafeContract("0x88ad09518695c6c3712AC10a214bE5109a655671", bridge_abi)
+
+    bridge.relayTokens("tokens/USDC", "multisigs/dao", int(1e18))
+    bridge.relayTokens("tokens/USDC", int(1e18))
+    
+    builder.output_payload("tests/payload_outputs/multiple_names.json")
