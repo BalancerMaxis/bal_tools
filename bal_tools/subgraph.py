@@ -112,6 +112,8 @@ class Subgraph:
         if not url:
             if not self.subgraph_url.get(subgraph):
                 self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
+                if not self.subgraph_url.get(subgraph):
+                    raise ValueError(f"Subgraph url not found for {subgraph} on chain {self.chain}")
 
         transport = RequestsHTTPTransport(
             url=url or self.subgraph_url[subgraph], retries=retries
