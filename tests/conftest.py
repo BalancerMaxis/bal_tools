@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-exempt_chains = ["fantom", "mode", "linea", "fraxtal", "goerli"]
+exempt_chains = ["fantom", "mode", "fraxtal", "goerli"]
 chains = [
     chain
     for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"])
