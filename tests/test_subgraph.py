@@ -20,12 +20,10 @@ def test_get_first_block_after_utc_timestamp(chain, subgraph_all_chains):
     """
     currently not applicable as block api is not deterministic
     """
-    # TODO: current subgraph is borked! doesnt have blocks before 20020000
-    pytest.skip(f"Skipping {chain}")
     if chain == "mainnet":
-        block = subgraph_all_chains.get_first_block_after_utc_timestamp(1708607101)
+        block = subgraph_all_chains.get_first_block_after_utc_timestamp(1723117347)
         assert isinstance(block, int)
-        assert block == 19283331
+        assert block == 20483622
     else:
         pytest.skip(f"Skipping {chain}")
 
