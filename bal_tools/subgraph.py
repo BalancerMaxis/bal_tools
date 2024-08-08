@@ -77,9 +77,13 @@ class Subgraph:
             for line in f:
                 if found_magic_word or magic_word + " `" in str(line):
                     # url is on this line
-                    url = re.search('`(.*)`', line.decode("utf-8")).group(1)
-                    if urlparse(url).scheme in ["http", "https"]:
-                        return url.replace('${keys.graph}', os.getenv("GRAPH_API_KEY"))
+                    r = re.search('`(.*)`', line.decode("utf-8"))
+                    try:
+                        url = r.group(1)
+                        if urlparse(url).scheme in ["http", "https"]:
+                            return url.replace('${keys.graph}', os.getenv("GRAPH_API_KEY"))
+                    except AttributeError:
+                        pass
                     return None
                 if magic_word in str(line):
                     # url is on next line, return it on the next iteration
