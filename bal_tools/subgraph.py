@@ -71,7 +71,8 @@ class Subgraph:
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
         # get subgraph url from frontend config
-        config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{self.chain}/index.ts"
+        chain_url_slug = 'gnosis-chain' if self.chain == 'gnosis' else self.chain
+        config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain_url_slug}/index.ts"
         found_magic_word = False
         with urlopen(config_file) as f:
             for line in f:
