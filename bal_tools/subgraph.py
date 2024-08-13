@@ -84,12 +84,34 @@ class Subgraph:
                         if urlparse(url).scheme in ["http", "https"]:
                             return url.replace('${keys.graph}', os.getenv("GRAPH_API_KEY"))
                     except AttributeError:
-                        pass
-                    return None
+                        break
                 if magic_word in str(line):
                     # url is on next line, return it on the next iteration
                     found_magic_word = True
-            return None
+        # loop again; config file might be of legacy type
+        return self.get_subgraph_url_legacy(subgraph, config_file)
+
+    def get_subgraph_url_legacy(self, subgraph, config_file):
+        if subgraph == "core":
+            magic_word = "main: ["
+        elif subgraph == "gauges":
+            magic_word = "gauge:"
+        elif subgraph == "blocks":
+            magic_word = "blocks:"
+
+        found_magic_word = False
+        with urlopen(config_file) as f:
+            for line in f:
+                if found_magic_word:
+                    url = line.decode("utf-8").strip().strip(" ,'")
+                    return url
+                if magic_word + " " in str(line):
+                    # url is on same line
+                    return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
+                if magic_word in str(line):
+                    # url is on next line, return it on the next iteration
+                    found_magic_word = True
+        return None
 
     def fetch_graphql_data(
         self,
