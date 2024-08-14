@@ -61,14 +61,19 @@ class Subgraph:
         returns:
         - https url of the subgraph
         """
+        if subgraph == "aura":
+            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
+
+        graph_api_key = os.getenv("GRAPH_API_KEY")
+        if not graph_api_key:
+            return self.get_subgraph_url_sdk(subgraph)
+
         if subgraph == "core":
             magic_word = "main:"
         elif subgraph == "gauges":
             magic_word = "gauge:"
         elif subgraph == "blocks":
             magic_word = "blocks:"
-        elif subgraph == "aura":
-            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
         # get subgraph url from frontend config
         chain_url_slug = 'gnosis-chain' if self.chain == 'gnosis' else self.chain
@@ -82,7 +87,7 @@ class Subgraph:
                     try:
                         url = r.group(1)
                         if urlparse(url).scheme in ["http", "https"]:
-                            return url.replace('${keys.graph}', os.getenv("GRAPH_API_KEY"))
+                            return url.replace('${keys.graph}', graph_api_key)
                     except AttributeError:
                         break
                 if magic_word in str(line):
@@ -90,6 +95,53 @@ class Subgraph:
                     found_magic_word = True
         # loop again; config file might be of legacy type
         return self.get_subgraph_url_legacy(subgraph, config_file)
+
+    def get_subgraph_url_sdk(self, subgraph):
+        if subgraph == "core":
+            magic_word = "subgraph:"
+        elif subgraph == "gauges":
+            magic_word = "gaugesSubgraph:"
+        elif subgraph == "blocks":
+            magic_word = "blockNumberSubgraph:"
+
+        # get subgraph url from sdk config
+        sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
+        found_magic_word = False
+        urls_reached = False
+        with urlopen(sdk_file) as f:
+            for line in f:
+                if "[Network." in str(line):
+                    chain_detected = (
+                        str(line).split("[Network.")[1].split("]")[0].lower()
+                    )
+                    if chain_detected == self.chain:
+                        for line in f:
+                            if "urls: {" in str(line) or urls_reached:
+                                urls_reached = True
+                                if "}," in str(line):
+                                    return None
+                                if found_magic_word:
+                                    url = (
+                                        line.decode("utf-8")
+                                        .strip()
+                                        .split(",")[0]
+                                        .strip(" ,'")
+                                    )
+                                    url = re.sub(
+                                        r"(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+",
+                                        "",
+                                        url,
+                                    )
+                                    if urlparse(url).scheme in [
+                                        "http",
+                                        "https",
+                                    ]:
+                                        return url
+                                    return None
+                                if magic_word in str(line):
+                                    # url is on next line, return it on the next iteration
+                                    found_magic_word = True
+        return None
 
     def get_subgraph_url_legacy(self, subgraph, config_file):
         if subgraph == "core":
