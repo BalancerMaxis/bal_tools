@@ -1,3 +1,4 @@
+import os
 import pytest
 from decimal import Decimal
 
@@ -76,7 +77,12 @@ def test_fetch_all_pools_info(subgraph):
     assert isinstance(res[0], Pool)
 
 
-def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
+@pytest.mark.parametrize("have_thegraph_key", [True, False])
+def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks, have_thegraph_key):
+    if have_thegraph_key:
+        os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY')
+    else:
+        os.environ['GRAPH_API_KEY'] = ""
     if chain in pool_snapshot_blocks.keys():
         block = pool_snapshot_blocks[chain]
         res = subgraph_all_chains.get_balancer_pool_snapshots(
