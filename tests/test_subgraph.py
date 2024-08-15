@@ -77,12 +77,7 @@ def test_fetch_all_pools_info(subgraph):
     assert isinstance(res[0], Pool)
 
 
-@pytest.mark.parametrize("have_thegraph_key", [True, False])
-def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks, have_thegraph_key):
-    if have_thegraph_key:
-        os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY')
-    else:
-        os.environ['GRAPH_API_KEY'] = ""
+def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
     if chain in pool_snapshot_blocks.keys():
         block = pool_snapshot_blocks[chain]
         res = subgraph_all_chains.get_balancer_pool_snapshots(
@@ -92,3 +87,15 @@ def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_b
         assert isinstance(res[0], PoolSnapshot)
         assert all(isinstance(pool.totalProtocolFeePaidInBPT, Decimal) for pool in res)
         assert all(isinstance(pool.tokens[0].paidProtocolFees, Decimal) for pool in res)
+
+
+@pytest.mark.parametrize("have_thegraph_key", [True, False])
+@pytest.mark.parametrize("subgraph_type", ['core', 'gauges', 'blocks', 'aura'])
+def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph_type):
+    if subgraph_all_chains.chain == 'sepolia' and subgraph_type in ['aura', 'blocks']:
+        pytest.skip(f'No {subgraph_type} subgraph exists on Sepolia')
+    os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY') if have_thegraph_key else ""
+    url = subgraph_all_chains.get_subgraph_url(subgraph_type)
+
+    assert url is not None
+    assert url is not ""
