@@ -53,7 +53,12 @@ class Subgraph:
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
-        perform some soup magic to determine the latest subgraph url used in the official frontend
+        perform some soup magic to determine the latest subgraph url
+
+        sources used (in order of priority):
+        1. frontend v2 config file
+        2. frontend v2 config file (legacy style; for chains not supported by decentralised the graph)
+        3. sdk config file
 
         params:
         - subgraph: "core", "gauges" , "blocks" or "aura"
@@ -63,10 +68,6 @@ class Subgraph:
         """
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
-
-        graph_api_key = os.getenv("GRAPH_API_KEY")
-        if not graph_api_key:
-            return self.get_subgraph_url_sdk(subgraph)
 
         if subgraph == "core":
             magic_word = "main:"
@@ -87,6 +88,9 @@ class Subgraph:
                     try:
                         url = r.group(1)
                         if urlparse(url).scheme in ["http", "https"]:
+                            graph_api_key = os.getenv("GRAPH_API_KEY")
+                            if '${keys.graph}' in url and not graph_api_key:
+                                break
                             return url.replace('${keys.graph}', graph_api_key)
                     except AttributeError:
                         break
@@ -132,12 +136,8 @@ class Subgraph:
                                         "",
                                         url,
                                     )
-                                    if urlparse(url).scheme in [
-                                        "http",
-                                        "https",
-                                    ]:
+                                    if urlparse(url).scheme in ["http", "https"]:
                                         return url
-                                    return None
                                 if magic_word in str(line):
                                     # url is on next line, return it on the next iteration
                                     found_magic_word = True
@@ -156,14 +156,18 @@ class Subgraph:
             for line in f:
                 if found_magic_word:
                     url = line.decode("utf-8").strip().strip(" ,'")
-                    return url
+                    if urlparse(url).scheme in ["http", "https"]:
+                        return url
                 if magic_word + " " in str(line):
                     # url is on same line
-                    return line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
+                    url = line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
+                    if urlparse(url).scheme in ["http", "https"]:
+                        return url
                 if magic_word in str(line):
                     # url is on next line, return it on the next iteration
                     found_magic_word = True
-        return None
+        # not found in legacy either; try sdk
+        return self.get_subgraph_url_sdk(subgraph)
 
     def fetch_graphql_data(
         self,
