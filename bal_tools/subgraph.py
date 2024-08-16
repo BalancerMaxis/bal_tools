@@ -53,7 +53,12 @@ class Subgraph:
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
-        perform some soup magic to determine the latest subgraph url used in the official frontend
+        perform some soup magic to determine the latest subgraph url
+
+        sources used (in order of priority):
+        1. frontend v2 config file
+        2. frontend v2 config file (legacy style; for chains not supported by decentralised the graph)
+        3. sdk config file
 
         params:
         - subgraph: "core", "gauges" , "blocks" or "aura"
@@ -61,14 +66,47 @@ class Subgraph:
         returns:
         - https url of the subgraph
         """
+        if subgraph == "aura":
+            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
+
+        if subgraph == "core":
+            magic_word = "main:"
+        elif subgraph == "gauges":
+            magic_word = "gauge:"
+        elif subgraph == "blocks":
+            magic_word = "blocks:"
+
+        # get subgraph url from frontend config
+        chain_url_slug = "gnosis-chain" if self.chain == "gnosis" else self.chain
+        config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain_url_slug}/index.ts"
+        found_magic_word = False
+        with urlopen(config_file) as f:
+            for line in f:
+                if found_magic_word or magic_word + " `" in str(line):
+                    # url is on this line
+                    r = re.search("`(.*)`", line.decode("utf-8"))
+                    try:
+                        url = r.group(1)
+                        if urlparse(url).scheme in ["http", "https"]:
+                            graph_api_key = os.getenv("GRAPH_API_KEY")
+                            if "${keys.graph}" in url and not graph_api_key:
+                                break
+                            return url.replace("${keys.graph}", graph_api_key)
+                    except AttributeError:
+                        break
+                if magic_word in str(line):
+                    # url is on next line, return it on the next iteration
+                    found_magic_word = True
+        # loop again; config file might be of legacy type
+        return self.get_subgraph_url_legacy(subgraph, config_file)
+
+    def get_subgraph_url_sdk(self, subgraph):
         if subgraph == "core":
             magic_word = "subgraph:"
         elif subgraph == "gauges":
             magic_word = "gaugesSubgraph:"
         elif subgraph == "blocks":
             magic_word = "blockNumberSubgraph:"
-        elif subgraph == "aura":
-            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
         # get subgraph url from sdk config
         sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
@@ -77,7 +115,9 @@ class Subgraph:
         with urlopen(sdk_file) as f:
             for line in f:
                 if "[Network." in str(line):
-                    chain_detected = str(line).split("[Network.")[1].split("]")[0].lower()
+                    chain_detected = (
+                        str(line).split("[Network.")[1].split("]")[0].lower()
+                    )
                     if chain_detected == self.chain:
                         for line in f:
                             if "urls: {" in str(line) or urls_reached:
@@ -96,16 +136,38 @@ class Subgraph:
                                         "",
                                         url,
                                     )
-                                    if urlparse(url).scheme in [
-                                        "http",
-                                        "https",
-                                    ]:
+                                    if urlparse(url).scheme in ["http", "https"]:
                                         return url
-                                    return None
                                 if magic_word in str(line):
                                     # url is on next line, return it on the next iteration
                                     found_magic_word = True
-            return None
+        return None
+
+    def get_subgraph_url_legacy(self, subgraph, config_file):
+        if subgraph == "core":
+            magic_word = "main: ["
+        elif subgraph == "gauges":
+            magic_word = "gauge:"
+        elif subgraph == "blocks":
+            magic_word = "blocks:"
+
+        found_magic_word = False
+        with urlopen(config_file) as f:
+            for line in f:
+                if found_magic_word:
+                    url = line.decode("utf-8").strip().strip(" ,'")
+                    if urlparse(url).scheme in ["http", "https"]:
+                        return url
+                if magic_word + " " in str(line):
+                    # url is on same line
+                    url = line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
+                    if urlparse(url).scheme in ["http", "https"]:
+                        return url
+                if magic_word in str(line):
+                    # url is on next line, return it on the next iteration
+                    found_magic_word = True
+        # not found in legacy either; try sdk
+        return self.get_subgraph_url_sdk(subgraph)
 
     def fetch_graphql_data(
         self,
@@ -129,6 +191,10 @@ class Subgraph:
         if not url:
             if not self.subgraph_url.get(subgraph):
                 self.subgraph_url[subgraph] = self.get_subgraph_url(subgraph)
+                if not self.subgraph_url.get(subgraph):
+                    raise ValueError(
+                        f"Subgraph url not found for {subgraph} on chain {self.chain}"
+                    )
 
         transport = RequestsHTTPTransport(
             url=url or self.subgraph_url[subgraph], retries=retries
@@ -202,7 +268,8 @@ class Subgraph:
             prices = [
                 Decimal(item["price"])
                 for entry in token_data["tokenGetHistoricalPrices"]
-                if entry["address"] == address and entry["chain"].lower() == chain.lower()
+                if entry["address"] == address
+                and entry["chain"].lower() == chain.lower()
                 for item in entry["prices"]
                 if end_date_ts >= int(item["timestamp"]) >= start_date_ts
             ]
@@ -259,7 +326,9 @@ class Subgraph:
             )
             decimals = weighed_pool_contract.functions.decimals().call()
             bpt_supply = Decimal(
-                weighed_pool_contract.functions.totalSupply().call(block_identifier=block)
+                weighed_pool_contract.functions.totalSupply().call(
+                    block_identifier=block
+                )
                 / 10**decimals
             )
         else:
@@ -274,7 +343,9 @@ class Subgraph:
         twap_results: List[TWAPResult] = []
 
         custom_price_tokens = [
-            address for address in token_addresses if self.custom_price_logic.get(address)
+            address
+            for address in token_addresses
+            if self.custom_price_logic.get(address)
         ]
         standard_price_tokens = [
             address
@@ -300,8 +371,10 @@ class Subgraph:
                 chain=chain,
                 date_range=date_range,
             )
-            twap_results.extend(res) if isinstance(res, list) else twap_results.append(
-                res
+            (
+                twap_results.extend(res)
+                if isinstance(res, list)
+                else twap_results.append(res)
             )
 
         bpt_price = (
