@@ -17,6 +17,9 @@ class BalPoolsGauges:
     def __init__(self, chain="mainnet", use_cached_core_pools=True):
         self.chain = chain.lower()
         self.subgraph = Subgraph(self.chain)
+        self.vebal_voting_list = self.subgraph.fetch_graphql_data(
+            "apiv3", "vebal_get_voting_list"
+        )["veBalGetVotingList"]
         if use_cached_core_pools:
             self.core_pools = (
                 requests.get(f"{GITHUB_RAW_OUTPUTS}/core_pools.json")
@@ -38,8 +41,7 @@ class BalPoolsGauges:
                 return True
 
     def is_pool_on_vebal_list(self, pool_id: str) -> bool:
-        data = self.subgraph.fetch_graphql_data("apiv3", "vebal_get_voting_list")
-        for pool in data["veBalGetVotingList"]:
+        for pool in self.vebal_voting_list:
             if pool["id"] == pool_id:
                 if not pool["gauge"]["isKilled"]:
                     return True
@@ -190,9 +192,11 @@ class BalPoolsGauges:
             # confirm the pool has an active gauge on the vebal voting list
             if not self.is_pool_on_vebal_list(pool_id):
                 del core_pools[pool_id]
+                continue
             # make sure the pools have an alive preferential gauge
             if not self.has_alive_preferential_gauge(pool_id):
                 del core_pools[pool_id]
+                continue
             # exclude pools with yield fee exemption
             elif self.is_pool_exempt_from_yield_fee(pool_id):
                 del core_pools[pool_id]
