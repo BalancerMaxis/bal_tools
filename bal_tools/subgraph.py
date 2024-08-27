@@ -80,24 +80,24 @@ class Subgraph:
         # get subgraph url from frontend config
         chain_url_slug = "gnosis-chain" if self.chain == "gnosis" else self.chain
         config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain_url_slug}/index.ts"
-        found_magic_word = False
-        with urlopen(config_file) as f:
-            for line in f:
-                if found_magic_word or magic_word + " `" in str(line):
-                    # url is on this line
-                    r = re.search("`(.*)`", line.decode("utf-8"))
-                    try:
-                        url = r.group(1)
-                        if urlparse(url).scheme in ["http", "https"]:
-                            graph_api_key = os.getenv("GRAPH_API_KEY")
-                            if "${keys.graph}" in url and not graph_api_key:
-                                break
-                            return url.replace("${keys.graph}", graph_api_key)
-                    except AttributeError:
-                        break
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+        # found_magic_word = False
+        # with urlopen(config_file) as f:
+        #     for line in f:
+        #         if found_magic_word or magic_word + " `" in str(line):
+        #             # url is on this line
+        #             r = re.search("`(.*)`", line.decode("utf-8"))
+        #             try:
+        #                 url = r.group(1)
+        #                 if urlparse(url).scheme in ["http", "https"]:
+        #                     graph_api_key = os.getenv("GRAPH_API_KEY")
+        #                     if "${keys.graph}" in url and not graph_api_key:
+        #                         break
+        #                     return url.replace("${keys.graph}", graph_api_key)
+        #             except AttributeError:
+        #                 break
+        #         if magic_word in str(line):
+        #             # url is on next line, return it on the next iteration
+        #             found_magic_word = True
         # loop again; config file might be of legacy type
         return self.get_subgraph_url_legacy(subgraph, config_file)
 
@@ -196,7 +196,7 @@ class Subgraph:
                     raise ValueError(
                         f"Subgraph url not found for {subgraph} on chain {self.chain}"
                     )
-
+        print("url", self.chain, url or self.subgraph_url[subgraph])
         transport = RequestsHTTPTransport(
             url=url or self.subgraph_url[subgraph], retries=retries
         )

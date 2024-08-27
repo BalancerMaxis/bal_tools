@@ -102,9 +102,10 @@ class PoolSnapshot(BaseModel):
     id: str
     symbol: str
     totalProtocolFeePaidInBPT: Decimal = Field(default=Decimal(0))
+    totalProtocolFee: Decimal = Field(default=Decimal(0))
     tokens: List[TokenFee]
 
-    @field_validator("totalProtocolFeePaidInBPT", mode="before")
+    @field_validator("totalProtocolFeePaidInBPT","totalProtocolFee", mode="before")
     @classmethod
     def set_default_total_fee(cls, v):
         if v is None:

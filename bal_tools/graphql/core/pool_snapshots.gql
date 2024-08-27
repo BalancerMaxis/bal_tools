@@ -12,6 +12,7 @@ query PoolsSnapshots($first: Int, $skip: Int, $block: Int) {
       id
       symbol
       totalProtocolFeePaidInBPT
+      totalProtocolFee
       tokens {
         symbol
         address
