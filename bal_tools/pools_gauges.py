@@ -2,6 +2,7 @@ from typing import Dict
 import requests
 from .utils import to_checksum_address
 
+from gql.transport.exceptions import TransportQueryError
 from bal_tools.subgraph import Subgraph
 from bal_tools.errors import NoResultError
 
@@ -124,12 +125,31 @@ class BalPoolsGauges:
                 f" pool {self.chain}:{pool_id}"
             )
 
+    def get_pool_tvl(self, pool_id: str) -> float:
+        """
+        Returns the TVL of a pool as per the API V3 subgraph
+        """
+        print(pool_id)
+        try:
+            data = self.subgraph.fetch_graphql_data(
+                "apiv3", "get_pool_tvl", {"chain": self.chain.upper(), "poolId": pool_id}
+            )
+        except TransportQueryError:
+            return 0
+        try:
+            return float(data["poolGetPool"]["dynamicData"]["totalLiquidity"])
+        except:
+            raise NoResultError(
+                "empty or malformed results looking for TVL of"
+                f" pool {self.chain}:{pool_id}"
+            )
+
     def get_liquid_pools_with_protocol_yield_fee(self) -> dict:
         """
         query the official balancer subgraph and retrieve pools that
         meet all three of the following conditions:
         - have at least one underlying asset that is yield bearing
-        - have a liquidity greater than $250k
+        - have a liquidity greater than $100k
         - provide the protocol with a fee on the yield; by either:
           - having a yield fee > 0
           - being a meta stable pool with swap fee > 0 (these old style pools dont have
@@ -143,7 +163,8 @@ class BalPoolsGauges:
         data = self.subgraph.fetch_graphql_data("core", "liquid_pools_protocol_yield_fee")
         try:
             for pool in data["pools"]:
-                filtered_pools[pool["id"]] = pool["symbol"]
+                if self.get_pool_tvl(pool["id"]) >= 100_000:
+                    filtered_pools[pool["id"]] = pool["symbol"]
         except KeyError:
             # no results for this chain
             pass
