@@ -38,7 +38,7 @@ class BalPoolsGauges:
                 return True
 
     def is_pool_on_vebal_list(self, pool_id: str) -> bool:
-        data = self.subgraph.fetch_graphql_data("apiv3", "fetch_all_pools_info")
+        data = self.subgraph.fetch_graphql_data("apiv3", "vebal_get_voting_list")
         for pool in data["veBalGetVotingList"]:
             if pool["id"] == pool_id:
                 if not pool["gauge"]["isKilled"]:
