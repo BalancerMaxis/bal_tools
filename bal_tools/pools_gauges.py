@@ -2,6 +2,7 @@ from typing import Dict
 import requests
 from .utils import to_checksum_address
 
+from gql.transport.exceptions import TransportQueryError
 from bal_tools.subgraph import Subgraph
 from bal_tools.errors import NoResultError
 
@@ -128,9 +129,13 @@ class BalPoolsGauges:
         """
         Returns the TVL of a pool as per the API V3 subgraph
         """
-        data = self.subgraph.fetch_graphql_data(
-            "apiv3", "get_pool_tvl", {"chain": self.chain.upper(), "poolId": pool_id}
-        )
+        print(pool_id)
+        try:
+            data = self.subgraph.fetch_graphql_data(
+                "apiv3", "get_pool_tvl", {"chain": self.chain.upper(), "poolId": pool_id}
+            )
+        except TransportQueryError:
+            return 0
         try:
             return float(data["poolGetPool"]["dynamicData"]["totalLiquidity"])
         except:
