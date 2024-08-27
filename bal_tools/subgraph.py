@@ -37,8 +37,6 @@ AURA_SUBGRAPHS_BY_CHAIN = {
 
 
 class Subgraph:
-    V3_URL = "https://api-v3.balancer.fi"
-
     def __init__(self, chain: str = "mainnet"):
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
@@ -61,11 +59,14 @@ class Subgraph:
         3. sdk config file
 
         params:
-        - subgraph: "core", "gauges" , "blocks" or "aura"
+        - subgraph: "apiv3", "core", "gauges", "blocks" or "aura"
 
         returns:
         - https url of the subgraph
         """
+        if subgraph == "apiv3":
+            return "https://api-v3.balancer.fi"
+
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
@@ -258,10 +259,9 @@ class Subgraph:
         params = {"addresses": addresses, "chain": chain, "range": "ONE_YEAR"}
 
         token_data = self.fetch_graphql_data(
-            "core",
+            "apiv3",
             "get_historical_token_prices",
             params,
-            url=self.V3_URL,
         )
 
         def calc_twap(address: str) -> TWAPResult:
@@ -308,10 +308,9 @@ class Subgraph:
         }
 
         token_data = self.fetch_graphql_data(
-            "core",
+            "apiv3",
             "get_pool_tokens",
             params,
-            url=self.V3_URL,
         )["poolGetPool"]
 
         # NOTE: dont checksum token addresses, api doesnt recognize them
@@ -409,7 +408,7 @@ class Subgraph:
         """
         Fetches all pools info from balancer graphql api
         """
-        res = self.fetch_graphql_data("core", "vebal_get_voting_list", url=self.V3_URL)
+        res = self.fetch_graphql_data("apiv3", "vebal_get_voting_list")
         return [Pool(**pool) for pool in res["veBalGetVotingList"]]
 
     def get_balancer_pool_snapshots(
