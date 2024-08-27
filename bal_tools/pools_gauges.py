@@ -37,6 +37,14 @@ class BalPoolsGauges:
             if pool["isExemptFromYieldProtocolFee"] == True:
                 return True
 
+    def is_pool_on_vebal_list(self, pool_id: str) -> bool:
+        data = self.subgraph.fetch_graphql_data("apiv3", "fetch_all_pools_info")
+        for pool in data["veBalGetVotingList"]:
+            if pool["id"] == pool_id:
+                if not pool["gauge"]["isKilled"]:
+                    return True
+        return False
+
     def get_bpt_balances(self, pool_id: str, block: int) -> Dict[str, int]:
         variables = {"poolId": pool_id, "block": int(block)}
         data = self.subgraph.fetch_graphql_data(
@@ -168,6 +176,7 @@ class BalPoolsGauges:
     def build_core_pools(self):
         """
         build the core pools dictionary by taking pools from `get_pools_with_rate_provider` and:
+        - confirm the pool has an active gauge on the vebal voting list
         - check if the pool has an alive preferential gauge
         - add pools from whitelist
         - remove pools from blacklist
@@ -178,6 +187,9 @@ class BalPoolsGauges:
         core_pools = self.get_liquid_pools_with_protocol_yield_fee()
 
         for pool_id in core_pools.copy():
+            # confirm the pool has an active gauge on the vebal voting list
+            if not self.is_pool_on_vebal_list(pool_id):
+                del core_pools[pool_id]
             # make sure the pools have an alive preferential gauge
             if not self.has_alive_preferential_gauge(pool_id):
                 del core_pools[pool_id]
