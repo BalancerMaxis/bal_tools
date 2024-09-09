@@ -4,8 +4,17 @@ from gql.transport.exceptions import TransportQueryError
 
 EXAMPLE_PREFERENTIAL_GAUGES = {
     "mainnet": (  # wsteTH-WETH
-        "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c2"
+        "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c2",
+        "0x5C0F23A5c1be65Fa710d385814a7Fd1Bda480b1C"
     ),
+    "gnosis": (  # wstETH-GNO
+        "0x4683e340a8049261057d5ab1b29c8d840e75695e00020000000000000000005a",
+        "0xB812249d60b80c7Cbc9398E382eD6DFDF82E23D2"
+    ),
+    "arbitrum": (  # RDNT-WETH
+        "0x32df62dc3aed2cd6224193052ce665dc181658410002000000000000000003bd",
+        "0xcf9f895296F5e1D66a7D4dcf1d92e1B435E9f999"
+    )
 }
 EXAMPLE_CORE_POOLS = {
     "mainnet": (  # wsteTH-WETH
@@ -31,7 +40,7 @@ def test_has_alive_preferential_gauge(bal_pools_gauges):
     confirm example alive preferential gauge can be found
     """
     try:
-        example = EXAMPLE_PREFERENTIAL_GAUGES[bal_pools_gauges.chain]
+        example = EXAMPLE_PREFERENTIAL_GAUGES[bal_pools_gauges.chain][0]
     except KeyError:
         pytest.skip(f"Skipping {bal_pools_gauges.chain}, no example preferential gauge")
 
@@ -107,3 +116,15 @@ def test_build_core_pools(bal_pools_gauges):
     except TransportQueryError as e:
         if "Too Many Requests" in str(e):
             pytest.skip(f"Skipping {bal_pools_gauges.chain}, too many requests")
+
+
+def test_get_preferential_gauge(bal_pools_gauges):
+    """
+    confirm we can correctly determine the preferential gauge for some given pools
+    """
+    try:
+        example = EXAMPLE_PREFERENTIAL_GAUGES[bal_pools_gauges.chain]
+    except KeyError:
+        pytest.skip(f"Skipping {bal_pools_gauges.chain}, no example preferential gauge")
+
+    assert bal_pools_gauges.get_preferential_gauge(example[0]) == example[1]
