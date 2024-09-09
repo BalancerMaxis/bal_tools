@@ -71,6 +71,14 @@ class BalPoolsGauges:
                 results[user_address] = float(share["balance"])
         return results
 
+    def get_preferential_gauge(self, pool_id: str) -> bool:
+        try:
+            return to_checksum_address(self.subgraph.fetch_graphql_data(
+                "apiv3", "get_pool_preferential_gauge", {"chain": self.chain.upper(), "poolId": pool_id}
+            )["poolGetPool"]["staking"]["gauge"]["gaugeAddress"])
+        except:
+            return None
+
     def is_core_pool(self, pool_id: str) -> bool:
         """
         check if a pool is a core pool using a fresh query to the subgraph
