@@ -75,7 +75,7 @@ class BalPoolsGauges:
         try:
             return to_checksum_address(self.subgraph.fetch_graphql_data(
                 "apiv3", "get_pool_preferential_gauge", {"chain": self.chain.upper(), "poolId": pool_id}
-            )["data"]["poolGetPool"]["staking"]["gauge"]["gaugeAddress"])
+            )["poolGetPool"]["staking"]["gauge"]["gaugeAddress"])
         except:
             return None
 
