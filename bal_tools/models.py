@@ -22,22 +22,23 @@ DateRange = Tuple[int, int]
 
 PoolId = NewType("PoolId", str)
 Symbol = NewType("Symbol", str)
-ChainName = NewType("ChainName", str)
 
 class CorePools(BaseModel):
-    pools: Dict[PoolId, Symbol]
+    pools: Dict[PoolId, Symbol] = Field(default_factory=dict)
 
-    class Config:
-        json_encoders = {
-            PoolId: str,
-            Symbol: str
-        }
+    @field_validator('pools')
+    @classmethod
+    def validate_pools(cls, v):
+        return {str(k): str(v) for k, v in v.items()}
 
-    def __getitem__(self, key: PoolId) -> Symbol:
+    def __getitem__(self, key: str) -> str:
+        return self.pools[str(key)]
+
+    def __setitem__(self, key: str, value: str):
+        self.pools[str(key)] = str(value)
+
+    def __getattr__(self, key: str) -> str:
         return self.pools[key]
-
-    def __setitem__(self, key: PoolId, value: Symbol):
-        self.pools[key] = value
 
     def __iter__(self):
         return iter(self.pools)
@@ -45,8 +46,6 @@ class CorePools(BaseModel):
     def __len__(self):
         return len(self.pools)
 
-    def model_dump(self, **kwargs):
-        return {str(k): str(v) for k, v in self.pools.items()}
 
 
 @dataclass

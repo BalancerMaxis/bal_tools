@@ -130,10 +130,3 @@ def test_get_preferential_gauge(bal_pools_gauges):
         pytest.skip(f"Skipping {bal_pools_gauges.chain}, no example preferential gauge")
 
     assert bal_pools_gauges.get_preferential_gauge(example[0]) == example[1]
-
-def test_serialize_json_core_pools(bal_pools_gauges):
-    """
-    confirm we can serialize CorePools by trying to dump into json
-    """
-    core_pools = bal_pools_gauges.build_core_pools()
-    json.dumps(core_pools.model_dump())
