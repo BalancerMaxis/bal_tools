@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, NewType
 from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
@@ -19,6 +19,23 @@ class GqlChain(Enum):
 
 
 DateRange = Tuple[int, int]
+
+PoolId = NewType("PoolId", str)
+Symbol = NewType("Symbol", str)
+ChainName = NewType("ChainName", str)
+
+class CorePools(BaseModel):
+    pools: Dict[PoolId, Symbol]
+    
+    class Config:
+        json_encoders = {
+            PoolId: str,
+            Symbol: str
+        }
+
+    def model_dump(self, **kwargs):
+        # convert PoolId and Symbol to strings for JSON serialization
+        return {str(k): str(v) for k, v in super().model_dump(**kwargs)['pools'].items()}
 
 
 @dataclass

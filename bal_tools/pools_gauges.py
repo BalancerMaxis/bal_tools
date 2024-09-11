@@ -1,6 +1,7 @@
 from typing import Dict
 import requests
 from .utils import to_checksum_address
+from .models import CorePools, PoolId, Symbol
 
 from gql.transport.exceptions import TransportQueryError
 from bal_tools.subgraph import Subgraph
@@ -22,11 +23,8 @@ class BalPoolsGauges:
             "apiv3", "vebal_get_voting_list"
         )["veBalGetVotingList"]
         if use_cached_core_pools:
-            self.core_pools = (
-                requests.get(f"{GITHUB_RAW_OUTPUTS}/core_pools.json")
-                .json()
-                .get(chain, {})
-            )
+            core_pools_data = requests.get(f"{GITHUB_RAW_OUTPUTS}/core_pools.json").json()
+            self.core_pools = CorePools(pools=core_pools_data.get(self.chain, {}))
         else:
             self.core_pools = self.build_core_pools()
 
@@ -89,7 +87,7 @@ class BalPoolsGauges:
         returns:
         True if the pool is a core pool
         """
-        return pool_id in self.core_pools
+        return pool_id in self.core_pools.pools
 
     def query_preferential_gauges(self, skip=0, step_size=100) -> list:
         """
@@ -204,7 +202,7 @@ class BalPoolsGauges:
                 return True
         print(f"Pool {pool_id} on {self.chain} has no alive preferential gauge")
 
-    def build_core_pools(self):
+    def build_core_pools(self) -> CorePools:
         """
         build the core pools dictionary by taking pools from `get_pools_with_rate_provider` and:
         - confirm the pool has an active gauge on the vebal voting list
@@ -213,7 +211,7 @@ class BalPoolsGauges:
         - remove pools from blacklist
 
         returns:
-        dictionary of the format {pool_id: symbol}
+        CorePools object containing the core pools for the current chain
         """
         core_pools = self.get_liquid_pools_with_protocol_yield_fee()
 
@@ -254,4 +252,4 @@ class BalPoolsGauges:
             # no results for this chain
             pass
 
-        return core_pools
+        return CorePools(pools={PoolId(k): Symbol(v) for k, v in core_pools.items()})
