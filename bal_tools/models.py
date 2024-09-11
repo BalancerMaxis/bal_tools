@@ -26,16 +26,27 @@ ChainName = NewType("ChainName", str)
 
 class CorePools(BaseModel):
     pools: Dict[PoolId, Symbol]
-    
+
     class Config:
         json_encoders = {
             PoolId: str,
             Symbol: str
         }
 
+    def __getitem__(self, key: PoolId) -> Symbol:
+        return self.pools[key]
+
+    def __setitem__(self, key: PoolId, value: Symbol):
+        self.pools[key] = value
+
+    def __iter__(self):
+        return iter(self.pools)
+
+    def __len__(self):
+        return len(self.pools)
+
     def model_dump(self, **kwargs):
-        # convert PoolId and Symbol to strings for JSON serialization
-        return {str(k): str(v) for k, v in super().model_dump(**kwargs)['pools'].items()}
+        return {str(k): str(v) for k, v in self.pools.items()}
 
 
 @dataclass
