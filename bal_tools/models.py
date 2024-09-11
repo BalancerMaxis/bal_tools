@@ -41,7 +41,7 @@ class CorePools(BaseModel):
         return self.pools[key]
 
     def __iter__(self):
-        return iter(self.pools)
+        return iter(self.pools.items())
 
     def __len__(self):
         return len(self.pools)
