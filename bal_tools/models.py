@@ -34,9 +34,6 @@ class CorePools(BaseModel):
     def __getitem__(self, key: str) -> str:
         return self.pools[str(key)]
 
-    def __setitem__(self, key: str, value: str):
-        self.pools[str(key)] = str(value)
-
     def __getattr__(self, key: str) -> str:
         return self.pools[key]
 
