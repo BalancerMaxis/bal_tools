@@ -132,6 +132,18 @@ class BalPoolsGauges:
                         all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
         return all_gauges
 
+    def query_all_pools(self) -> list:
+        """
+        query all pools from the apiv3 subgraph
+        filters out disabled pools
+        """
+        data = self.subgraph.fetch_graphql_data("apiv3", "get_pools", {"chain": self.chain.upper()})
+        all_pools = []
+        for pool in data["poolGetPools"]:
+            if pool['dynamicData']['swapEnabled']:
+                all_pools.append({"address": pool['id'], "symbol": pool['symbol']})
+        return all_pools
+
     def get_last_join_exit(self, pool_id: int) -> int:
         """
         Returns a timestamp of the last join/exit for a given pool id
