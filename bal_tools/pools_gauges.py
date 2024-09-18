@@ -118,6 +118,19 @@ class BalPoolsGauges:
             result += self.query_root_gauges(skip + step_size, step_size)
         return result
 
+    def query_all_gauges(self) -> list:
+        """
+        query all gauges from the apiv3 subgraph
+        """
+        data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
+        all_gauges = []
+        for gauge in data["poolGetPools"]:
+            if gauge['staking'] is not None:
+                all_gauges.append({"id": gauge['staking']['gauge']['gaugeAddress'], "symbol": f"{gauge['symbol']}-gauge"})
+                for other_gauge in gauge['staking']['gauge']['otherGauges']:
+                    all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
+        return all_gauges
+
     def get_last_join_exit(self, pool_id: int) -> int:
         """
         Returns a timestamp of the last join/exit for a given pool id
