@@ -126,9 +126,10 @@ class BalPoolsGauges:
         all_gauges = []
         for gauge in data["poolGetPools"]:
             if gauge['staking'] is not None:
-                all_gauges.append({"id": gauge['staking']['gauge']['gaugeAddress'], "symbol": f"{gauge['symbol']}-gauge"})
-                for other_gauge in gauge['staking']['gauge']['otherGauges']:
-                    all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
+                if gauge['staking']['gauge'] is not None:  # this is an edge case for the 80bal20weth pool
+                    all_gauges.append({"id": gauge['staking']['gauge']['gaugeAddress'], "symbol": f"{gauge['symbol']}-gauge"})
+                    for other_gauge in gauge['staking']['gauge']['otherGauges']:
+                        all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
         return all_gauges
 
     def get_last_join_exit(self, pool_id: int) -> int:
