@@ -118,7 +118,7 @@ class BalPoolsGauges:
             result += self.query_root_gauges(skip + step_size, step_size)
         return result
 
-    def query_all_gauges(self) -> list:
+    def query_all_gauges(self, include_other_gauges=True) -> list:
         """
         query all gauges from the apiv3 subgraph
         """
@@ -128,8 +128,9 @@ class BalPoolsGauges:
             if gauge['staking'] is not None:
                 if gauge['staking']['gauge'] is not None:  # this is an edge case for the 80bal20weth pool
                     all_gauges.append({"id": gauge['staking']['gauge']['gaugeAddress'], "symbol": f"{gauge['symbol']}-gauge"})
-                    for other_gauge in gauge['staking']['gauge']['otherGauges']:
-                        all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
+                    if include_other_gauges:
+                        for other_gauge in gauge['staking']['gauge']['otherGauges']:
+                            all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
         return all_gauges
 
     def query_all_pools(self) -> list:
