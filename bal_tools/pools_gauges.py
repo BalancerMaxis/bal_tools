@@ -136,27 +136,19 @@ class BalPoolsGauges:
         query all gauges from the apiv3 subgraph
         """
         data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
-        pools = [GaugePoolData(**flatten_nested_dict(pool)) for pool in data["poolGetPools"]]
         all_gauges = []
-        for pool in pools:
-            if pool.staking and pool.staking.gauge:
-                gauge_address = pool.staking.gauge.gaugeAddress
-                if gauge_address:
-                    all_gauges.append(pool)
-                    if include_other_gauges:
-                        other_gauges = pool.staking.gauge.otherGauges
-                        for other_gauge in other_gauges:
-                            other_pool = GaugePoolData(
-                                staking=StakingData(
-                                    gauge=GaugeData(
-                                        gaugeAddress=other_gauge['id'],
-                                        otherGauges=[]
-                                    )
-                                ),
-                                chain=pool.chain,
-                                symbol=f"{pool.symbol}-other"
-                            )
-                            all_gauges.append(other_pool)
+        for gauge in data["poolGetPools"]:
+            pool = GaugePoolData(**flatten_nested_dict(gauge))
+            if pool.staking is not None and pool.staking.gauge is not None:
+                gauge_pool = pool.model_copy(deep=True)
+                gauge_pool.symbol = f"{pool.symbol}-gauge"
+                all_gauges.append(gauge_pool)
+                if include_other_gauges and pool.staking.gauge.otherGauges:
+                    for other_gauge in pool.staking.gauge.otherGauges:
+                        other_pool = pool.model_copy(deep=True)
+                        other_pool.symbol = f"{pool.symbol}-gauge"
+                        other_pool.staking.gauge.gaugeAddress = other_gauge['id']
+                        all_gauges.append(other_pool)
         return all_gauges
 
     def get_last_join_exit(self, pool_id: int) -> int:
