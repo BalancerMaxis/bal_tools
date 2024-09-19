@@ -1,10 +1,11 @@
-from typing import Dict
+from typing import Dict, List
 import requests
-from .utils import to_checksum_address
+from .utils import to_checksum_address, flatten_nested_dict
 
 from gql.transport.exceptions import TransportQueryError
 from bal_tools.subgraph import Subgraph
 from bal_tools.errors import NoResultError
+from bal_tools.models import PoolData, GaugePoolData, GaugeData, StakingData
 
 GITHUB_RAW_OUTPUTS = (
     "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/outputs"
@@ -118,32 +119,45 @@ class BalPoolsGauges:
             result += self.query_root_gauges(skip + step_size, step_size)
         return result
 
-    def query_all_gauges(self, include_other_gauges=True) -> list:
-        """
-        query all gauges from the apiv3 subgraph
-        """
-        data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
-        all_gauges = []
-        for gauge in data["poolGetPools"]:
-            if gauge['staking'] is not None:
-                if gauge['staking']['gauge'] is not None:  # this is an edge case for the 80bal20weth pool
-                    all_gauges.append({"id": gauge['staking']['gauge']['gaugeAddress'], "symbol": f"{gauge['symbol']}-gauge"})
-                    if include_other_gauges:
-                        for other_gauge in gauge['staking']['gauge']['otherGauges']:
-                            all_gauges.append({"id": other_gauge['id'], "symbol": f"{gauge['symbol']}-gauge"})
-        return all_gauges
-
-    def query_all_pools(self) -> list:
+    def query_all_pools(self) -> List[PoolData]:
         """
         query all pools from the apiv3 subgraph
         filters out disabled pools
         """
         data = self.subgraph.fetch_graphql_data("apiv3", "get_pools", {"chain": self.chain.upper()})
-        all_pools = []
-        for pool in data["poolGetPools"]:
-            if pool['dynamicData']['swapEnabled']:
-                all_pools.append({"address": pool['id'], "symbol": pool['symbol']})
-        return all_pools
+        pools = [PoolData(**flatten_nested_dict(pool)) for pool in data["poolGetPools"]]
+        return [
+            pool for pool in pools
+            if pool.dynamicData.swapEnabled
+        ]
+
+    def query_all_gauges(self, include_other_gauges=True) -> List[GaugePoolData]:
+        """
+        query all gauges from the apiv3 subgraph
+        """
+        data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
+        pools = [GaugePoolData(**flatten_nested_dict(pool)) for pool in data["poolGetPools"]]
+        all_gauges = []
+        for pool in pools:
+            if pool.staking and pool.staking.gauge:
+                gauge_address = pool.staking.gauge.gaugeAddress
+                if gauge_address:
+                    all_gauges.append(pool)
+                    if include_other_gauges:
+                        other_gauges = pool.staking.gauge.otherGauges
+                        for other_gauge in other_gauges:
+                            other_pool = GaugePoolData(
+                                staking=StakingData(
+                                    gauge=GaugeData(
+                                        gaugeAddress=other_gauge['id'],
+                                        otherGauges=[]
+                                    )
+                                ),
+                                chain=pool.chain,
+                                symbol=f"{pool.symbol}-other"
+                            )
+                            all_gauges.append(other_pool)
+        return all_gauges
 
     def get_last_join_exit(self, pool_id: int) -> int:
         """

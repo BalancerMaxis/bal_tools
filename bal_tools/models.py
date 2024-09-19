@@ -130,3 +130,28 @@ class PoolSnapshot(BaseModel):
             if field in values:
                 values[field] = cls.str_to_decimal(values[field])
         return values
+
+
+class DynamicData(BaseModel):
+    swapEnabled: bool
+    
+
+class PoolData(BaseModel):
+    id: str
+    symbol: str
+    dynamicData: DynamicData
+
+
+class GaugeData(BaseModel):
+    gaugeAddress: Optional[str] = None
+    otherGauges: List[dict] = Field(default_factory=list)
+
+
+class StakingData(BaseModel):
+    gauge: Optional[GaugeData] = None
+
+
+class GaugePoolData(BaseModel):
+    staking: Optional[StakingData] = None
+    chain: str
+    symbol: str

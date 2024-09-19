@@ -1,5 +1,6 @@
 import pytest
 from gql.transport.exceptions import TransportQueryError
+from bal_tools.models import PoolData, GaugePoolData
 
 
 EXAMPLE_PREFERENTIAL_GAUGES = {
@@ -128,3 +129,22 @@ def test_get_preferential_gauge(bal_pools_gauges):
         pytest.skip(f"Skipping {bal_pools_gauges.chain}, no example preferential gauge")
 
     assert bal_pools_gauges.get_preferential_gauge(example[0]) == example[1]
+
+
+def test_query_all_pools(bal_pools_gauges):
+    """
+    test return data of v3 AllGauges query
+    """
+    response = bal_pools_gauges.query_all_pools()
+    
+    if len(response) > 0:
+        assert isinstance(response[0], PoolData)
+
+def test_query_all_gauges(bal_pools_gauges):
+    """
+    test return data of v3 AllPools query
+    """
+    response = bal_pools_gauges.query_all_gauges()
+
+    if len(response) > 0:
+        assert isinstance(response[0], GaugePoolData)
