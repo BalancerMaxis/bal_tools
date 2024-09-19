@@ -1,6 +1,8 @@
 import pytest
 from gql.transport.exceptions import TransportQueryError
 from bal_tools.models import PoolData, GaugePoolData
+from bal_tools.models import CorePools
+import json
 
 
 EXAMPLE_PREFERENTIAL_GAUGES = {
@@ -48,18 +50,18 @@ def test_has_alive_preferential_gauge(bal_pools_gauges):
     assert bal_pools_gauges.has_alive_preferential_gauge(example)
 
 
-def test_core_pools_dict(bal_pools_gauges):
+def test_core_pools_type(bal_pools_gauges):
     """
-    confirm we get a dict back with entries
+    confirm we get a CorePools type with entries
     """
     core_pools = bal_pools_gauges.core_pools
-    assert isinstance(core_pools, dict)
+    assert isinstance(core_pools, CorePools)
 
 
 @pytest.mark.skip(reason="core pool list can change; examples may not be valid")
 def test_core_pools_attr(bal_pools_gauges):
     """
-    confirm example core pool is in the dict
+    confirm example core pool is in CorePools
     """
     core_pools = bal_pools_gauges.core_pools
 
@@ -110,10 +112,10 @@ def test_is_pool_exempt_from_yield_fee(bal_pools_gauges):
 
 def test_build_core_pools(bal_pools_gauges):
     """
-    confirm core_pools can be built and is a dict
+    confirm core_pools can be built and is a CorePools type
     """
     try:
-        assert isinstance(bal_pools_gauges.build_core_pools(), dict)
+        assert isinstance(bal_pools_gauges.build_core_pools(), CorePools)
     except TransportQueryError as e:
         if "Too Many Requests" in str(e):
             pytest.skip(f"Skipping {bal_pools_gauges.chain}, too many requests")
