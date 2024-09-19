@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Dict, NewType
 from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
@@ -19,6 +19,30 @@ class GqlChain(Enum):
 
 
 DateRange = Tuple[int, int]
+
+PoolId = NewType("PoolId", str)
+Symbol = NewType("Symbol", str)
+
+class CorePools(BaseModel):
+    pools: Dict[PoolId, Symbol] = Field(default_factory=dict)
+
+    @field_validator('pools')
+    @classmethod
+    def validate_pools(cls, v):
+        return {str(k): str(v) for k, v in v.items()}
+
+    def __getitem__(self, key: str) -> str:
+        return self.pools[str(key)]
+
+    def __getattr__(self, key: str) -> str:
+        return self.pools[key]
+
+    def __iter__(self):
+        return iter(self.pools.items())
+
+    def __len__(self):
+        return len(self.pools)
+
 
 
 @dataclass

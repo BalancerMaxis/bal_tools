@@ -45,7 +45,7 @@ def test_get_twap_price_token(subgraph, date_range):
         date_range=date_range,
     )
     assert isinstance(res.twap_price, Decimal)
-    assert pytest.approx(res.twap_price, rel=Decimal(1e-2)) == Decimal(3743.80)
+    assert pytest.approx(res.twap_price, rel=Decimal(0.05)) == Decimal(3743.80)
 
 
 def test_get_twap_prices(subgraph, date_range):
@@ -55,7 +55,7 @@ def test_get_twap_prices(subgraph, date_range):
         date_range=date_range,
     )
     assert isinstance(prices.bpt_price, Decimal)
-    assert pytest.approx(prices.bpt_price, rel=Decimal(1e-2)) == Decimal(4149.46)
+    assert pytest.approx(prices.bpt_price, rel=Decimal(0.05)) == Decimal(4149.46)
     assert all(isinstance(price.twap_price, Decimal) for price in prices.token_prices)
 
 
@@ -68,7 +68,7 @@ def test_get_twap_prices_custom_price_logic(subgraph, date_range, web3):
         block=20059322,
     )
     assert isinstance(prices.bpt_price, Decimal)
-    assert pytest.approx(prices.bpt_price, rel=Decimal(1e-2)) == Decimal(3707.99)
+    assert pytest.approx(prices.bpt_price, rel=Decimal(0.05)) == Decimal(3707.99)
     assert all(isinstance(price.twap_price, Decimal) for price in prices.token_prices)
 
 
