@@ -1,6 +1,6 @@
 import pytest
 from gql.transport.exceptions import TransportQueryError
-from bal_tools.models import PoolData, GaugePoolData
+from bal_tools.models import PoolData, GaugeData
 from bal_tools.models import CorePools
 import json
 
@@ -149,4 +149,4 @@ def test_query_all_gauges(bal_pools_gauges):
     response = bal_pools_gauges.query_all_gauges()
 
     if len(response) > 0:
-        assert isinstance(response[0], GaugePoolData)
+        assert isinstance(response[0], GaugeData)

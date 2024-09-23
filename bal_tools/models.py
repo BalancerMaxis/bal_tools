@@ -156,26 +156,19 @@ class PoolSnapshot(BaseModel):
         return values
 
       
-class DynamicData(BaseModel):
-    swapEnabled: bool
-    
-
 class PoolData(BaseModel):
     id: str
     symbol: str
-    dynamicData: DynamicData
-
-
-class GaugeData(BaseModel):
-    gaugeAddress: Optional[str] = None
-    otherGauges: List[dict] = Field(default_factory=list)
-
-
-class StakingData(BaseModel):
-    gauge: Optional[GaugeData] = None
+    dynamicData: dict
 
 
 class GaugePoolData(BaseModel):
-    staking: Optional[StakingData] = None
+    staking: Optional[dict]
     chain: str
+    symbol: str
+
+
+@dataclass
+class GaugeData:
+    id: str
     symbol: str
