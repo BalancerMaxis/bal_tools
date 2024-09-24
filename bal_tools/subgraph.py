@@ -54,9 +54,9 @@ class Subgraph:
         perform some soup magic to determine the latest subgraph url
 
         sources used (in order of priority):
-        1. frontend v2 config file
-        2. frontend v2 config file (legacy style; for chains not supported by decentralised the graph)
-        3. sdk config file
+        1. sdk config file
+        2. frontend v2 config file
+        3. frontend v2 config file (legacy style; for chains not supported by decentralised the graph)
 
         params:
         - subgraph: "apiv3", "core", "gauges", "blocks" or "aura"
@@ -70,6 +70,9 @@ class Subgraph:
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
+        return self.get_subgraph_url_sdk(subgraph)
+
+    def get_subgraph_url_frontendv2(self, subgraph):
         if subgraph == "core":
             magic_word = "main:"
         elif subgraph == "gauges":
@@ -142,7 +145,7 @@ class Subgraph:
                                 if magic_word in str(line):
                                     # url is on next line, return it on the next iteration
                                     found_magic_word = True
-        return None
+        return self.get_subgraph_url_frontendv2(subgraph)
 
     def get_subgraph_url_legacy(self, subgraph, config_file):
         if subgraph == "core":
@@ -168,7 +171,7 @@ class Subgraph:
                     # url is on next line, return it on the next iteration
                     found_magic_word = True
         # not found in legacy either; try sdk
-        return self.get_subgraph_url_sdk(subgraph)
+        return None
 
     def fetch_graphql_data(
         self,
