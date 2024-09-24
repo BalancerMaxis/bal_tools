@@ -90,19 +90,11 @@ def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_b
 
 
 @pytest.mark.parametrize("have_thegraph_key", [True, False])
-@pytest.mark.parametrize("subgraph_type", ["core", "gauges", "blocks", "aura"])
+@pytest.mark.parametrize("subgraph_type", ['core', 'gauges', 'blocks', 'aura'])
 def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph_type):
-    if subgraph_all_chains.chain == "sepolia" and subgraph_type in [
-        "aura",
-        "blocks",
-        "gauges",
-    ]:
-        pytest.skip(f"No {subgraph_type} subgraph exists on Sepolia")
-    if subgraph_all_chains.chain == "zkevm" and subgraph_type == "blocks":
-        pytest.skip(f"No {subgraph_type} subgraph exists on Polygon zkEVM")
-    os.environ["GRAPH_API_KEY"] = (
-        os.getenv("GRAPH_API_KEY") if have_thegraph_key else ""
-    )
+    if subgraph_all_chains.chain == 'sepolia' and subgraph_type in ['aura', 'blocks']:
+        pytest.skip(f'No {subgraph_type} subgraph exists on Sepolia')
+    os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY') if have_thegraph_key else ""
     url = subgraph_all_chains.get_subgraph_url(subgraph_type)
 
     assert url is not None
