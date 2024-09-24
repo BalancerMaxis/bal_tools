@@ -70,7 +70,12 @@ class Subgraph:
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
-        return self.get_subgraph_url_sdk(subgraph)
+        return (
+            self.get_subgraph_url_sdk(subgraph)
+            or self.get_subgraph_url_frontendv2(subgraph)
+            or self.get_subgraph_url_legacy(subgraph)
+            or None
+        )
 
     def get_subgraph_url_frontendv2(self, subgraph):
         if subgraph == "core":
@@ -101,8 +106,7 @@ class Subgraph:
                 if magic_word in str(line):
                     # url is on next line, return it on the next iteration
                     found_magic_word = True
-        # loop again; config file might be of legacy type
-        return self.get_subgraph_url_legacy(subgraph, config_file)
+        return None
 
     def get_subgraph_url_sdk(self, subgraph):
         if subgraph == "core":
@@ -145,15 +149,18 @@ class Subgraph:
                                 if magic_word in str(line):
                                     # url is on next line, return it on the next iteration
                                     found_magic_word = True
-        return self.get_subgraph_url_frontendv2(subgraph)
+        return None
 
-    def get_subgraph_url_legacy(self, subgraph, config_file):
+    def get_subgraph_url_legacy(self, subgraph):
         if subgraph == "core":
             magic_word = "main: ["
         elif subgraph == "gauges":
             magic_word = "gauge:"
         elif subgraph == "blocks":
             magic_word = "blocks:"
+
+        chain_url_slug = "gnosis-chain" if self.chain == "gnosis" else self.chain
+        config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain_url_slug}/index.ts"
 
         found_magic_word = False
         with urlopen(config_file) as f:
@@ -170,7 +177,6 @@ class Subgraph:
                 if magic_word in str(line):
                     # url is on next line, return it on the next iteration
                     found_magic_word = True
-        # not found in legacy either; try sdk
         return None
 
     def fetch_graphql_data(
