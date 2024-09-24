@@ -3,6 +3,7 @@ from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
 from pydantic import BaseModel, field_validator, model_validator, Field
+import json_fix
 
 
 class GqlChain(Enum):
@@ -42,7 +43,9 @@ class CorePools(BaseModel):
 
     def __len__(self):
         return len(self.pools)
-
+    
+    def __json__(self):
+        return self.pools
 
 
 @dataclass

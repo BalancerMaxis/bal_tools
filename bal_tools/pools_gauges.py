@@ -170,7 +170,6 @@ class BalPoolsGauges:
         """
         Returns the TVL of a pool as per the API V3 subgraph
         """
-        print(pool_id)
         try:
             data = self.subgraph.fetch_graphql_data(
                 "apiv3", "get_pool_tvl", {"chain": self.chain.upper(), "poolId": pool_id}
