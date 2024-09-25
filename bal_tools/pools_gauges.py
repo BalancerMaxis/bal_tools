@@ -127,13 +127,13 @@ class BalPoolsGauges:
             if gauge_pool.staking is not None and gauge_pool.staking.get('gauge') is not None:
                 gauge = gauge_pool.staking['gauge']
                 all_gauges.append(GaugeData(
-                    id=gauge['gaugeAddress'],
+                    address=gauge['gaugeAddress'],
                     symbol=f"{gauge_pool.symbol}-gauge"
                 ))
                 if include_other_gauges:
                     for other_gauge in gauge.get('otherGauges', []):
                         all_gauges.append(GaugeData(
-                            id=other_gauge['id'],
+                            address=other_gauge['id'],
                             symbol=f"{gauge_pool.symbol}-gauge"
                         ))
         return all_gauges

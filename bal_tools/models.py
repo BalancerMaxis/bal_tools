@@ -43,7 +43,7 @@ class CorePools(BaseModel):
 
     def __len__(self):
         return len(self.pools)
-    
+
     def __json__(self):
         return self.pools
 
@@ -158,9 +158,9 @@ class PoolSnapshot(BaseModel):
                 values[field] = cls.str_to_decimal(values[field])
         return values
 
-      
+
 class PoolData(BaseModel):
-    id: str
+    address: str
     symbol: str
     dynamicData: dict
 
@@ -173,5 +173,5 @@ class GaugePoolData(BaseModel):
 
 @dataclass
 class GaugeData:
-    id: str
+    address: str
     symbol: str
