@@ -18,6 +18,7 @@ query LiquidPoolsProtocolYieldFee {
                 { poolTypeVersion: 1 }
               ]
             }
+            { poolType_contains_nocase: "Gyro" }
           ]
         }
       ]
