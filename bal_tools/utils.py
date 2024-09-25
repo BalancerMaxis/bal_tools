@@ -27,8 +27,10 @@ def get_abi(contract_name: str) -> Union[Dict, List[Dict]]:
 
 
 def flatten_nested_dict(d):
-    for key, value in list(d.items()):
+    result = d.copy()
+    for key, value in list(result.items()):
         if isinstance(value, dict):
-            d.pop(key)
-            d.update(value)
-    return d
+            if key not in ['dynamicData', 'staking']:
+                result.pop(key)
+                result.update(value)
+    return result
