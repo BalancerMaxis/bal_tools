@@ -1,6 +1,6 @@
 query AllPools($chain: GqlChain!) {
   poolGetPools(where: { chainIn: [$chain] }) {
-    id
+    address
     symbol
     dynamicData {
       swapEnabled

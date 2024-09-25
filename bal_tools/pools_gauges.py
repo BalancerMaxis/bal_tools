@@ -140,7 +140,7 @@ class BalPoolsGauges:
         all_pools = []
         for pool in data["poolGetPools"]:
             if pool['dynamicData']['swapEnabled']:
-                all_pools.append({"address": pool['id'], "symbol": pool['symbol']})
+                all_pools.append({"address": pool['address'], "symbol": pool['symbol']})
         return all_pools
 
     def get_last_join_exit(self, pool_id: int) -> int:
