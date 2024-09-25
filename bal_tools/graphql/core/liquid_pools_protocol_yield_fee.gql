@@ -2,6 +2,7 @@ query LiquidPoolsProtocolYieldFee {
   pools(
     first: 1000
     where: {
+      # pool should have at least one rate provider that is not address(0)
       and: [
         {
           priceRateProviders_: {
@@ -10,15 +11,35 @@ query LiquidPoolsProtocolYieldFee {
         }
         {
           or: [
-            { protocolYieldFeeCache_gt: 0 }
             {
+              # regular pools; need to have a yield fee
+              and: [
+                { protocolYieldFeeCache_gt: 0 }
+                { poolType_not_contains_nocase: "Gyro" }
+              ]
+            }
+            {
+              # metastable pools dont have the yield fee attribute;
+              # check swap fee and pool type version instead
               and: [
                 { swapFee_gt: 0 }
                 { poolType_contains: "MetaStable" }
                 { poolTypeVersion: 1 }
               ]
             }
-            { poolType_contains_nocase: "Gyro" }
+            {
+              # gyro pools have a unreliable yield fee;
+              # check total earned fees instead (either in usd or bpt)
+              and: [
+                { poolType_contains_nocase: "Gyro" }
+                {
+                  or: [
+                    { totalProtocolFee_gt: 0 }
+                    { totalProtocolFeePaidInBPT_gt: 0 }
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
