@@ -71,9 +71,9 @@ class Subgraph:
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
 
         return (
-            self.get_subgraph_url_sdk(subgraph)
-            or self.get_subgraph_url_frontendv2(subgraph)
+            self.get_subgraph_url_frontendv2(subgraph)
             or self.get_subgraph_url_legacy(subgraph)
+            or self.get_subgraph_url_sdk(subgraph)
             or None
         )
 
