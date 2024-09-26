@@ -160,7 +160,7 @@ class Subgraph:
             magic_word = "blocks:"
 
         chain_url_slug = "gnosis-chain" if self.chain == "gnosis" else self.chain
-        config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/develop/src/lib/config/{chain_url_slug}/index.ts"
+        config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/master/src/lib/config/{chain_url_slug}/index.ts"
 
         found_magic_word = False
         with urlopen(config_file) as f:
