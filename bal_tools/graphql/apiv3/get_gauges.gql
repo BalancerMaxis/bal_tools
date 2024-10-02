@@ -1,0 +1,14 @@
+query AllGauges($chain: GqlChain!) {
+  poolGetPools(where: { chainIn: [$chain] }) {
+    staking {
+      gauge {
+        gaugeAddress
+        otherGauges {
+          id
+        }
+      }
+    }
+    chain
+    symbol
+  }
+}

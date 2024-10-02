@@ -1,11 +1,11 @@
-from typing import Dict
+from typing import Dict, List
 import requests
-from .utils import to_checksum_address
-from .models import CorePools, PoolId, Symbol
+from .utils import to_checksum_address, flatten_nested_dict
 
 from gql.transport.exceptions import TransportQueryError
 from bal_tools.subgraph import Subgraph
 from bal_tools.errors import NoResultError
+from bal_tools.models import PoolData, GaugePoolData, GaugeData, CorePools, PoolId, Symbol
 
 GITHUB_RAW_OUTPUTS = (
     "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/outputs"
@@ -116,6 +116,41 @@ class BalPoolsGauges:
             result += self.query_root_gauges(skip + step_size, step_size)
         return result
 
+    def query_all_gauges(self, include_other_gauges=True) -> List[GaugeData]:
+        """
+        query all gauges from the apiv3 subgraph
+        """
+        data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
+        all_gauges = []
+        for pool in data["poolGetPools"]:
+            gauge_pool = GaugePoolData(**flatten_nested_dict(pool))
+            if gauge_pool.staking is not None and gauge_pool.staking.get('gauge') is not None:
+                gauge = gauge_pool.staking['gauge']
+                all_gauges.append(GaugeData(
+                    address=gauge['gaugeAddress'],
+                    symbol=f"{gauge_pool.symbol}-gauge"
+                ))
+                if include_other_gauges:
+                    for other_gauge in gauge.get('otherGauges', []):
+                        all_gauges.append(GaugeData(
+                            address=other_gauge['id'],
+                            symbol=f"{gauge_pool.symbol}-gauge"
+                        ))
+        return all_gauges
+
+    def query_all_pools(self) -> List[PoolData]:
+        """
+        query all pools from the apiv3 subgraph
+        filters out disabled pools
+        """
+        data = self.subgraph.fetch_graphql_data("apiv3", "get_pools", {"chain": self.chain.upper()})
+        all_pools = []
+        for pool in data["poolGetPools"]:
+            pool_data = PoolData(**flatten_nested_dict(pool))
+            if pool_data.dynamicData['swapEnabled']:
+                all_pools.append(pool_data)
+        return all_pools
+
     def get_last_join_exit(self, pool_id: int) -> int:
         """
         Returns a timestamp of the last join/exit for a given pool id
@@ -135,7 +170,6 @@ class BalPoolsGauges:
         """
         Returns the TVL of a pool as per the API V3 subgraph
         """
-        print(pool_id)
         try:
             data = self.subgraph.fetch_graphql_data(
                 "apiv3", "get_pool_tvl", {"chain": self.chain.upper(), "poolId": pool_id}

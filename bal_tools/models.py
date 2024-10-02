@@ -3,6 +3,7 @@ from decimal import Decimal
 from dataclasses import dataclass, fields
 from enum import Enum
 from pydantic import BaseModel, field_validator, model_validator, Field
+import json_fix
 
 
 class GqlChain(Enum):
@@ -43,6 +44,8 @@ class CorePools(BaseModel):
     def __len__(self):
         return len(self.pools)
 
+    def __json__(self):
+        return self.pools
 
 
 @dataclass
@@ -154,3 +157,21 @@ class PoolSnapshot(BaseModel):
             if field in values:
                 values[field] = cls.str_to_decimal(values[field])
         return values
+
+
+class PoolData(BaseModel):
+    address: str
+    symbol: str
+    dynamicData: dict
+
+
+class GaugePoolData(BaseModel):
+    staking: Optional[dict]
+    chain: str
+    symbol: str
+
+
+@dataclass
+class GaugeData:
+    address: str
+    symbol: str
