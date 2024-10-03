@@ -120,9 +120,21 @@ class BalPoolsGauges:
         """
         query all gauges from the apiv3 subgraph
         """
-        data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
+        def paginate_all_gauges_query(skip=0, step_size=100):
+            variables = {"chain": self.chain.upper(), "skip": skip, "step_size": step_size}
+            data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", variables)
+
+            try:
+                result = data["poolGetPools"]
+            except KeyError:
+                result = []
+            if len(result) > 0:
+                # didnt reach end of results yet, collect next page
+                result += paginate_all_gauges_query(skip + step_size, step_size)
+            return result
+
         all_gauges = []
-        for pool in data["poolGetPools"]:
+        for pool in paginate_all_gauges_query():
             gauge_pool = GaugePoolData(**flatten_nested_dict(pool))
             if gauge_pool.staking is not None and gauge_pool.staking.get('gauge') is not None:
                 gauge = gauge_pool.staking['gauge']
@@ -143,9 +155,21 @@ class BalPoolsGauges:
         query all pools from the apiv3 subgraph
         filters out disabled pools
         """
-        data = self.subgraph.fetch_graphql_data("apiv3", "get_pools", {"chain": self.chain.upper()})
+        def paginate_all_pools_query(skip=0, step_size=100):
+            variables = {"chain": self.chain.upper(), "skip": skip, "step_size": step_size}
+            data = self.subgraph.fetch_graphql_data("apiv3", "get_pools", variables)
+
+            try:
+                result = data["poolGetPools"]
+            except KeyError:
+                result = []
+            if len(result) > 0:
+                # didnt reach end of results yet, collect next page
+                result += paginate_all_pools_query(skip + step_size, step_size)
+            return result
+
         all_pools = []
-        for pool in data["poolGetPools"]:
+        for pool in paginate_all_pools_query():
             pool_data = PoolData(**flatten_nested_dict(pool))
             if pool_data.dynamicData['swapEnabled']:
                 all_pools.append(pool_data)

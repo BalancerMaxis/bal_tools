@@ -1,5 +1,5 @@
-query AllPools($chain: GqlChain!) {
-  poolGetPools(where: { chainIn: [$chain] }) {
+query AllPools($chain: GqlChain!, $first: Int, $skip: Int) {
+  poolGetPools(where: { chainIn: [$chain] }, first: $first, skip: $skip) {
     address
     symbol
     dynamicData {

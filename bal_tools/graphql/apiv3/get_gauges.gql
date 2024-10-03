@@ -1,5 +1,5 @@
-query AllGauges($chain: GqlChain!) {
-  poolGetPools(where: { chainIn: [$chain] }) {
+query AllGauges($chain: GqlChain!, $first: Int, $skip: Int) {
+  poolGetPools(where: { chainIn: [$chain] }, first: $first, skip: $skip) {
     staking {
       gauge {
         gaugeAddress
