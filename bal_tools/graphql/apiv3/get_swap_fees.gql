@@ -1,0 +1,25 @@
+query getSwapFees($where: GqlPoolFilter)
+{
+  poolGetPools(where: $where) {
+    chain
+    id
+    symbol
+    address
+    type
+    dynamicData {
+      totalLiquidity
+      swapFee
+    }
+  }
+}
+## Example Where
+#{
+#  "where": {
+#    "minTvl": 100000,
+#    "poolTypeIn": [
+#      "STABLE",
+#      "META_STABLE",
+#      "COMPOSABLE_STABLE"
+#    ],
+#    "chainIn": ["ARBITRUM", "MAINNET"]
+#  }

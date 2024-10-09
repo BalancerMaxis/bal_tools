@@ -453,6 +453,43 @@ class Subgraph:
                 break
         return all_pools
 
+
+    def query_pools_by_tvl_and_swapfee(self,
+                                lower_boundry=0.0001,
+                                upper_boundry=0.0003,
+                                min_tvl=500_000,
+                                pool_types=["STABLE", "META_STABLE", "COMPOSABLE_STABLE"],
+                                chains=None):
+        if chains is None:
+            chains = [self.chain.upper()]
+        print(f"Running on {chains}")
+        where = {"where":
+            {
+                "minTvl": min_tvl,
+                "poolTypeIn": pool_types,
+                "chainIn": chains
+            }
+        }
+        print(where)
+        results = {}
+        query = self.fetch_graphql_data("apiv3", "get_swap_fees", where)
+        for result in query["poolGetPools"]:
+            if float(result["dynamicData"]["swapFee"]) < lower_boundry or float(result["dynamicData"]["swapFee"]) > upper_boundry:
+                pool_id = result["id"]
+                chain = result["chain"]
+                symbol = result["symbol"]
+                swapFee = result["dynamicData"]["swapFee"]
+                tvl = result["dynamicData"]["totalLiquidity"]
+
+                results[pool_id] = {
+                    "chain": chain,
+                    "symbol": symbol,
+                    "swapFee": swapFee,
+                    "tvl": tvl
+                }
+        return results
+
+
     def _saETH(
         self,
         address: str,
