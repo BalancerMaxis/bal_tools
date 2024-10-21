@@ -56,7 +56,7 @@ class TWAPResult:
 
 @dataclass
 class TwapPrices:
-    bpt_price: Decimal
+    bpt_price: TWAPResult
     token_prices: List[TWAPResult]
 
 
