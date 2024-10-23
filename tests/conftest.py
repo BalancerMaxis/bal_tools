@@ -101,3 +101,8 @@ def pool_snapshot_blocks():
 @pytest.fixture(scope="module")
 def DRPC_KEY():
     return os.getenv("DRPC_KEY")
+
+
+@pytest.fixture(scope="module")
+def mainnet_core_pools():
+    return BalPoolsGauges().core_pools

@@ -43,11 +43,7 @@ class Subgraph:
         self.chain = chain
         self.subgraph_url = {}
 
-        self.custom_price_logic: Dict[str, Callable] = {
-            # do not checksum
-            "0xf1617882a71467534d14eee865922de1395c9e89": self._saETH,
-            "0xfc87753df5ef5c368b5fba8d4c5043b77e8c5b39": self._aETH,
-        }
+        self.custom_price_logic: Dict[str, Callable] = {}
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
@@ -263,6 +259,9 @@ class Subgraph:
             and one_year_ago_ts - margin <= end_date_ts <= current_ts + margin
         ):
             raise ValueError("date range should be within the past year")
+        
+        if end_date_ts < start_date_ts:
+            raise ValueError("end date should be after start date")
 
         chain = chain.value if isinstance(chain, GqlChain) else chain.upper()
         params = {"addresses": addresses, "chain": chain, "range": "ONE_YEAR"}
@@ -283,7 +282,7 @@ class Subgraph:
                 if end_date_ts >= int(item["timestamp"]) >= start_date_ts
             ]
             if not prices:
-                return None
+                raise ValueError(f"No prices found for {address}")
             return TWAPResult(address=address, twap_price=sum(prices) / len(prices))
 
         results = [calc_twap(addr) for addr in addresses]
@@ -292,14 +291,11 @@ class Subgraph:
     def get_twap_price_pool(
         self,
         pool_id: str,
-        chain: GqlChain,
+        chain: Union[GqlChain, str],
         date_range: DateRange,
-        web3: Web3 = None,
-        block: int = None,
     ) -> TwapPrices:
         """
         fetches the TWAP price of a pool's BPT and its tokens over the given `date_range`.
-        if web3 and a block are passed, the function will calculate the total supply of the pool at the given block
 
         params:
         - pool_id: the id of the pool
@@ -322,78 +318,21 @@ class Subgraph:
             params,
         )["poolGetPool"]
 
-        # NOTE: dont checksum token addresses, api doesnt recognize them
         token_addresses = [token["address"] for token in token_data["poolTokens"]]
         bpt_address = pool_id[:42]
 
-        if web3 and block:
-            balancer_pool_address = Web3.to_checksum_address(pool_id[:42])
-            weighed_pool_contract = web3.eth.contract(
-                address=balancer_pool_address,
-                abi=get_abi("WeighedPool"),
-            )
-            decimals = weighed_pool_contract.functions.decimals().call()
-            bpt_supply = Decimal(
-                weighed_pool_contract.functions.totalSupply().call(
-                    block_identifier=block
-                )
-                / 10**decimals
-            )
-        else:
-            # sometimes the bpt address is part of the `poolTokens`
-            if bpt_address in token_addresses:
-                bpt_loc = token_addresses.index(bpt_address)
-                bpt_supply = Decimal(token_data["poolTokens"][bpt_loc]["balance"])
-                token_addresses.remove(bpt_address)
-            else:
-                bpt_supply = Decimal(token_data["dynamicData"]["totalShares"])
-
-        twap_results: List[TWAPResult] = []
-
-        custom_price_tokens = [
-            address
-            for address in token_addresses
-            if self.custom_price_logic.get(address)
-        ]
-        standard_price_tokens = [
-            address
-            for address in token_addresses
-            if address not in custom_price_tokens and address != bpt_address
-        ]
-
-        for address in custom_price_tokens:
-            custom_price_logic = self.custom_price_logic.get(address)
-            twap_results.append(
-                custom_price_logic(
-                    address=address,
-                    chain=chain,
-                    date_range=date_range,
-                    web3=web3,
-                    block=block,
-                )
-            )
-
-        if standard_price_tokens:
-            res = self.get_twap_price_token(
-                addresses=standard_price_tokens,
-                chain=chain,
-                date_range=date_range,
-            )
-            (
-                twap_results.extend(res)
-                if isinstance(res, list)
-                else twap_results.append(res)
-            )
-
-        bpt_price = (
-            sum(
-                Decimal(token["balance"]) * twap_result.twap_price
-                for token, twap_result in zip(token_data["poolTokens"], twap_results)
-            )
-            / bpt_supply
+        bpt_price = self.get_twap_price_token(
+            addresses=bpt_address,
+            chain=chain,
+            date_range=date_range,
+        )
+        token_prices = self.get_twap_price_token(
+            addresses=token_addresses,
+            chain=chain,
+            date_range=date_range,
         )
 
-        return TwapPrices(bpt_price=bpt_price, token_prices=twap_results)
+        return TwapPrices(bpt_price=bpt_price, token_prices=token_prices)
 
     def calculate_aura_vebal_share(self, web3: Web3, block_number: int) -> Decimal:
         """
@@ -453,46 +392,3 @@ class Subgraph:
                 break
         return all_pools
 
-    def _saETH(
-        self,
-        address: str,
-        chain: str,
-        date_range: DateRange,
-        web3: Web3 = None,
-        block: int = None,
-    ) -> TWAPResult:
-        if not web3 and not block:
-            raise ValueError("need `web3` and `block` to calculate saETH TWAP")
-
-        saeth = web3.eth.contract(
-            address=web3.to_checksum_address(address),
-            abi=get_abi("saETH"),
-        )
-
-        shares = Decimal(
-            saeth.functions.convertToShares(int(1e18)).call(block_identifier=block)
-            / int(1e18)
-        )
-
-        res = self.get_twap_price_token(
-            addresses=["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"],
-            chain=chain,
-            date_range=date_range,
-        )
-        return TWAPResult(address=address, twap_price=res.twap_price * shares)
-
-    def _aETH(
-        self,
-        address: str,
-        chain: str,
-        date_range: DateRange,
-        web3: Web3 = None,
-        block: int = None,
-    ) -> TWAPResult:
-        # pegged to eth
-        prices = self.get_twap_price_token(
-            addresses=["0xc02aaa39b223fe8d0a0e5c4f27ead9083c756cc2"],
-            chain=chain,
-            date_range=date_range,
-        )
-        return TWAPResult(address=address, twap_price=prices.twap_price)
