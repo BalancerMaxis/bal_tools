@@ -54,7 +54,7 @@ class SafeContract:
         except Exception as e:
             raise ValueError(f"Failed to convert value to string: {e}")
 
-    def call_function(self, func: ABIFunction, args: tuple, kwargs: dict = {}) -> bytes:
+    def call_function(self, func: ABIFunction, args: tuple, kwargs: dict = {}) :
         if func.constant:
             raise ValueError("Cannot build a tx for a constant function")
 
@@ -70,6 +70,7 @@ class SafeContract:
         if not func.inputs:
             tx.contractInputsValues = None  # type: ignore
 
+        cleaned_args = []
         for arg, input_type in zip(args, func.inputs):
             if input_type.type == "address":
                 arg = self.tx_builder._resolve_address(arg)
@@ -80,6 +81,11 @@ class SafeContract:
             input_template.internalType = input_type.type
             tx.contractMethod.inputs.append(input_template)
             tx.contractInputsValues[input_type.name] = self._handle_type(arg)
+            
+            if isinstance(arg, float):
+                cleaned_args.append(int(arg))
+            else:
+                cleaned_args.append(arg)
 
         self.tx_builder.base_payload.transactions.append(tx)
-        return func.encode_inputs(args)
+        return func.encode_inputs(cleaned_args)

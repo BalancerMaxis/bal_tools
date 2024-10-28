@@ -39,7 +39,15 @@ class ABIFunction:
         selector = self.get_selector()
         if self.inputs == []:
             return selector
-        encoded_inputs = encode([input.type for input in self.inputs], values)
+        inputs = [input.type for input in self.inputs]
+        # handle bytes
+        values = [bytes.fromhex(v[2:]) if i.startswith("bytes") and isinstance(v, str) else v for i, v in zip(inputs, values)]
+        # handle bytes[]
+        values = [
+            [bytes.fromhex(v[2:]) if isinstance(v, str) else v for v in val] if i.endswith("[]") and i.startswith("bytes") else val
+            for i, val in zip(inputs, values)
+        ]
+        encoded_inputs = encode(inputs, values)
         return selector + encoded_inputs
 
 
