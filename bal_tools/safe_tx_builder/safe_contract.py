@@ -54,7 +54,7 @@ class SafeContract:
         except Exception as e:
             raise ValueError(f"Failed to convert value to string: {e}")
 
-    def call_function(self, func: ABIFunction, args: tuple, kwargs: dict = {}):
+    def call_function(self, func: ABIFunction, args: tuple, kwargs: dict = {}) -> bytes:
         if func.constant:
             raise ValueError("Cannot build a tx for a constant function")
 
@@ -82,3 +82,4 @@ class SafeContract:
             tx.contractInputsValues[input_type.name] = self._handle_type(arg)
 
         self.tx_builder.base_payload.transactions.append(tx)
+        return func.encode_inputs(args)

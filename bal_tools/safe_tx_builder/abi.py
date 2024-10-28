@@ -1,5 +1,7 @@
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import List, Optional, Any
+from eth_abi import encode, decode
+from eth_utils import function_signature_to_4byte_selector
 
 
 @dataclass
@@ -15,6 +17,30 @@ class ABIFunction:
     outputs: List[str] = None
     constant: bool = False
     payable: bool = False
+    
+    @staticmethod
+    def func_selector(sig: str) -> bytes:
+        return function_signature_to_4byte_selector(sig)
+
+    def get_selector(self) -> bytes:
+        return self.func_selector(self.get_signature())
+
+    def get_signature(self) -> str:
+        if self.name is None:
+            raise ValueError("Cannot compute signature without a name")
+
+        input_types = ""
+        if self.inputs:
+            input_types = ",".join([input.type for input in self.inputs])
+
+        return f"{self.name}({input_types})"
+
+    def encode_inputs(self, values: List[Any]) -> bytes:
+        selector = self.get_selector()
+        if self.inputs == []:
+            return selector
+        encoded_inputs = encode([input.type for input in self.inputs], values)
+        return selector + encoded_inputs
 
 
 @dataclass
