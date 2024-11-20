@@ -87,6 +87,6 @@ class SafeTxBuilder:
         returns the payload
         """
         with open(output_file, "w") as f:
-            f.write(self.base_payload.model_dump_json())
+            f.write(self.base_payload.model_dump_json(indent=2))
 
         return self.base_payload
