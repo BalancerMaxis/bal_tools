@@ -16,3 +16,6 @@ class GraphQLRequestError(Exception):
 
 class UnexpectedListLengthError(Exception):
     pass
+
+class NoPricesFoundError(Exception):
+    pass

@@ -15,6 +15,7 @@ from bal_addresses import AddrBook
 from typing import Union, List, Callable, Dict
 from .utils import get_abi, flatten_nested_dict
 from .models import *
+from .errors import NoPricesFoundError
 
 
 graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
@@ -285,7 +286,7 @@ class Subgraph:
                 if end_date_ts >= int(item["timestamp"]) >= start_date_ts
             ]
             if not prices:
-                raise ValueError(f"No prices found for {address}")
+                raise NoPricesFoundError(f"No prices found for {address} on {chain} between {start_date_ts} UTC and {end_date_ts} UTC")
             return TWAPResult(address=address, twap_price=sum(prices) / len(prices))
 
         results = [calc_twap(addr) for addr in addresses]
