@@ -97,7 +97,7 @@ class Subgraph:
                         if urlparse(url).scheme in ["http", "https"]:
                             graph_api_key = os.getenv("GRAPH_API_KEY")
                             if "${keys.graph}" in url and not graph_api_key:
-                                warnings.warn(f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}")
+                                warnings.warn(f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}", UserWarning)
                                 break
                             return url.replace("${keys.graph}", graph_api_key)
                     except AttributeError:

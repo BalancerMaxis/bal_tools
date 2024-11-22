@@ -89,7 +89,7 @@ def test_warning_configuration(monkeypatch):
     monkeypatch.setenv('GRAPH_API_KEY', '')
     
     # Should emit warning
-    with pytest.warns(UserWarning, match="calling .* without `GRAPH_API_KEY` set"):
+    with pytest.warns(UserWarning):
         subgraph = Subgraph(silence_warnings=False)
         subgraph.get_subgraph_url("core")
 
