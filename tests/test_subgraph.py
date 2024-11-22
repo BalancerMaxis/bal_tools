@@ -2,6 +2,7 @@ import os
 import pytest
 from decimal import Decimal
 import json
+import warnings
 
 from bal_tools.subgraph import (
     Subgraph,
@@ -82,3 +83,18 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
 
     assert url is not None
     assert url is not ""
+
+
+def test_warning_configuration(monkeypatch):
+    monkeypatch.setenv('GRAPH_API_KEY', '')
+    
+    # Should emit warning
+    with pytest.warns(UserWarning, match="calling .* without `GRAPH_API_KEY` set"):
+        subgraph = Subgraph(silence_warnings=False)
+        subgraph.get_subgraph_url("core")
+
+    # Should not emit warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        subgraph = Subgraph(silence_warnings=True)
+        subgraph.get_subgraph_url("core")

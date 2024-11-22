@@ -5,6 +5,7 @@ import re
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import Union, List, Callable, Dict
+import warnings
 
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
@@ -37,12 +38,13 @@ AURA_SUBGRAPHS_BY_CHAIN = {
 
 
 class Subgraph:
-    def __init__(self, chain: str = "mainnet"):
+    def __init__(self, chain: str = "mainnet", silence_warnings: bool = False):
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
         self.subgraph_url = {}
-
+        if silence_warnings:
+            warnings.filterwarnings('ignore', module='bal_tools.subgraph')
         self.custom_price_logic: Dict[str, Callable] = {}
 
     def get_subgraph_url(self, subgraph="core") -> str:
@@ -95,6 +97,7 @@ class Subgraph:
                         if urlparse(url).scheme in ["http", "https"]:
                             graph_api_key = os.getenv("GRAPH_API_KEY")
                             if "${keys.graph}" in url and not graph_api_key:
+                                warnings.warn(f"`GRAPH_API_KEY` not set. may be rate limited for {url}")
                                 break
                             return url.replace("${keys.graph}", graph_api_key)
                     except AttributeError:
