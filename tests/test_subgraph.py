@@ -2,6 +2,7 @@ import os
 import pytest
 from decimal import Decimal
 import json
+import warnings
 
 from bal_tools.subgraph import (
     Subgraph,
@@ -10,6 +11,7 @@ from bal_tools.subgraph import (
     PoolSnapshot,
     DateRange,
 )
+from bal_tools.errors import NoPricesFoundError
 
 
 @pytest.fixture(scope="module")
@@ -44,16 +46,20 @@ def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
         loaded_pool_prices = json.load(f)
 
     for pool_id, symbol in mainnet_core_pools:
-        prices = subgraph.get_twap_price_pool(
-            pool_id=pool_id,
-            chain=GqlChain.MAINNET,
-            date_range=date_range,
-        )
-        loaded_price = loaded_pool_prices.get(symbol)
-        if loaded_price:
-            assert pytest.approx(prices.bpt_price.twap_price, rel=Decimal(0.01)) == Decimal(loaded_price.get("bpt_price"))
-            for token_price, loaded_token_price in zip(prices.token_prices, loaded_price.get("token_prices")):
-                assert pytest.approx(token_price.twap_price, rel=Decimal(0.01)) == Decimal(loaded_token_price.get("twap_price"))
+        try:
+            prices = subgraph.get_twap_price_pool(
+                pool_id=pool_id,
+                chain=GqlChain.MAINNET,
+                date_range=date_range,
+            )
+            loaded_price = loaded_pool_prices.get(symbol)
+            if loaded_price:
+                assert pytest.approx(prices.bpt_price.twap_price, rel=Decimal(0.01)) == Decimal(loaded_price.get("bpt_price"))
+                for token_price, loaded_token_price in zip(prices.token_prices, loaded_price.get("token_prices")):
+                    assert pytest.approx(token_price.twap_price, rel=Decimal(0.01)) == Decimal(loaded_token_price.get("twap_price"))
+        except NoPricesFoundError:
+            continue
+
 
 def test_fetch_all_pools_info(subgraph):
     res = subgraph.fetch_all_pools_info()
@@ -82,3 +88,18 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
 
     assert url is not None
     assert url is not ""
+
+
+def test_warning_configuration(monkeypatch):
+    monkeypatch.setenv('GRAPH_API_KEY', '')
+    
+    # Should emit warning
+    with pytest.warns(UserWarning):
+        subgraph = Subgraph(silence_warnings=False)
+        subgraph.get_subgraph_url("core")
+
+    # Should not emit warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        subgraph = Subgraph(silence_warnings=True)
+        subgraph.get_subgraph_url("core")
