@@ -40,7 +40,9 @@ def test_invalid_chain():
 
 
 def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
-    with open(f"tests/price_data/pool_prices-{date_range[0]}-{date_range[1]}.json", "r") as f:
+    with open(
+        f"tests/price_data/pool_prices-{date_range[0]}-{date_range[1]}.json", "r"
+    ) as f:
         loaded_pool_prices = json.load(f)
 
     for pool_id, symbol in mainnet_core_pools:
@@ -51,9 +53,16 @@ def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
         )
         loaded_price = loaded_pool_prices.get(symbol)
         if loaded_price:
-            assert pytest.approx(prices.bpt_price.twap_price, rel=Decimal(0.01)) == Decimal(loaded_price.get("bpt_price"))
-            for token_price, loaded_token_price in zip(prices.token_prices, loaded_price.get("token_prices")):
-                assert pytest.approx(token_price.twap_price, rel=Decimal(0.01)) == Decimal(loaded_token_price.get("twap_price"))
+            assert pytest.approx(
+                prices.bpt_price.twap_price, rel=Decimal(0.01)
+            ) == Decimal(loaded_price.get("bpt_price"))
+            for token_price, loaded_token_price in zip(
+                prices.token_prices, loaded_price.get("token_prices")
+            ):
+                assert pytest.approx(
+                    token_price.twap_price, rel=Decimal(0.01)
+                ) == Decimal(loaded_token_price.get("twap_price"))
+
 
 def test_fetch_all_pools_info(subgraph):
     res = subgraph.fetch_all_pools_info()
@@ -73,11 +82,22 @@ def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_b
 
 
 @pytest.mark.parametrize("have_thegraph_key", [True, False])
-@pytest.mark.parametrize("subgraph_type", ['core', 'gauges', 'blocks', 'aura'])
+@pytest.mark.parametrize("subgraph_type", ["core", "gauges", "blocks", "aura"])
 def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph_type):
-    if subgraph_all_chains.chain == 'sepolia' and subgraph_type in ['aura', 'blocks']:
-        pytest.skip(f'No {subgraph_type} subgraph exists on Sepolia')
-    os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY') if have_thegraph_key else ""
+    if subgraph_all_chains.chain in ["sepolia", "mode"] and subgraph_type in [
+        "aura",
+        "blocks",
+    ]:
+        pytest.skip(
+            f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
+        )
+    if subgraph_all_chains.chain == "fraxtal" and subgraph_type == "blocks":
+        pytest.skip(
+            f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
+        )
+    os.environ["GRAPH_API_KEY"] = (
+        os.getenv("GRAPH_API_KEY") if have_thegraph_key else ""
+    )
     url = subgraph_all_chains.get_subgraph_url(subgraph_type)
 
     assert url is not None
