@@ -19,26 +19,26 @@ def date_range():
     return (1728190800, 1729400400)
 
 
-# @pytest.mark.skip
-# def test_get_first_block_after_utc_timestamp(chain, subgraph_all_chains):
-#     """
-#     currently not applicable as block api is not deterministic
-#     """
-#     if chain == "mainnet":
-#         block = subgraph_all_chains.get_first_block_after_utc_timestamp(1723117347)
-#         assert isinstance(block, int)
-#         assert block == 20483622
-#     else:
-#         pytest.skip(f"Skipping {chain}")
+@pytest.mark.skip
+def test_get_first_block_after_utc_timestamp(chain, subgraph_all_chains):
+    """
+    currently not applicable as block api is not deterministic
+    """
+    if chain == "mainnet":
+        block = subgraph_all_chains.get_first_block_after_utc_timestamp(1723117347)
+        assert isinstance(block, int)
+        assert block == 20483622
+    else:
+        pytest.skip(f"Skipping {chain}")
 
 
-# def test_invalid_chain():
-#     """
-#     we should get a raise when passing an invalid chain
-#     """
+def test_invalid_chain():
+    """
+    we should get a raise when passing an invalid chain
+    """
 
-#     with pytest.raises(ValueError):
-#         Subgraph("invalid_chain")
+    with pytest.raises(ValueError):
+        Subgraph("invalid_chain")
 
 
 def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
@@ -61,45 +61,45 @@ def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
             continue
 
 
-# def test_fetch_all_pools_info(subgraph):
-#     res = subgraph.fetch_all_pools_info()
-#     assert isinstance(res[0], Pool)
+def test_fetch_all_pools_info(subgraph):
+    res = subgraph.fetch_all_pools_info()
+    assert isinstance(res[0], Pool)
 
 
-# def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
-#     if chain in pool_snapshot_blocks.keys():
-#         block = pool_snapshot_blocks[chain]
-#         res = subgraph_all_chains.get_balancer_pool_snapshots(
-#             block, pools_per_req=25, limit=25
-#         )
+def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
+    if chain in pool_snapshot_blocks.keys():
+        block = pool_snapshot_blocks[chain]
+        res = subgraph_all_chains.get_balancer_pool_snapshots(
+            block, pools_per_req=25, limit=25
+        )
 
-#         assert isinstance(res[0], PoolSnapshot)
-#         assert all(isinstance(pool.totalProtocolFeePaidInBPT, Decimal) for pool in res)
-#         assert all(isinstance(pool.tokens[0].paidProtocolFees, Decimal) for pool in res)
-
-
-# @pytest.mark.parametrize("have_thegraph_key", [True, False])
-# @pytest.mark.parametrize("subgraph_type", ['core', 'gauges', 'blocks', 'aura'])
-# def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph_type):
-#     if subgraph_all_chains.chain == 'sepolia' and subgraph_type in ['aura', 'blocks']:
-#         pytest.skip(f'No {subgraph_type} subgraph exists on Sepolia')
-#     os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY') if have_thegraph_key else ""
-#     url = subgraph_all_chains.get_subgraph_url(subgraph_type)
-
-#     assert url is not None
-#     assert url is not ""
+        assert isinstance(res[0], PoolSnapshot)
+        assert all(isinstance(pool.totalProtocolFeePaidInBPT, Decimal) for pool in res)
+        assert all(isinstance(pool.tokens[0].paidProtocolFees, Decimal) for pool in res)
 
 
-# def test_warning_configuration(monkeypatch):
-#     monkeypatch.setenv('GRAPH_API_KEY', '')
+@pytest.mark.parametrize("have_thegraph_key", [True, False])
+@pytest.mark.parametrize("subgraph_type", ['core', 'gauges', 'blocks', 'aura'])
+def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph_type):
+    if subgraph_all_chains.chain == 'sepolia' and subgraph_type in ['aura', 'blocks']:
+        pytest.skip(f'No {subgraph_type} subgraph exists on Sepolia')
+    os.environ['GRAPH_API_KEY'] = os.getenv('GRAPH_API_KEY') if have_thegraph_key else ""
+    url = subgraph_all_chains.get_subgraph_url(subgraph_type)
+
+    assert url is not None
+    assert url is not ""
+
+
+def test_warning_configuration(monkeypatch):
+    monkeypatch.setenv('GRAPH_API_KEY', '')
     
-#     # Should emit warning
-#     with pytest.warns(UserWarning):
-#         subgraph = Subgraph(silence_warnings=False)
-#         subgraph.get_subgraph_url("core")
+    # Should emit warning
+    with pytest.warns(UserWarning):
+        subgraph = Subgraph(silence_warnings=False)
+        subgraph.get_subgraph_url("core")
 
-#     # Should not emit warning
-#     with warnings.catch_warnings():
-#         warnings.simplefilter("error")
-#         subgraph = Subgraph(silence_warnings=True)
-#         subgraph.get_subgraph_url("core")
+    # Should not emit warning
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        subgraph = Subgraph(silence_warnings=True)
+        subgraph.get_subgraph_url("core")
