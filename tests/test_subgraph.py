@@ -46,13 +46,13 @@ def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
         loaded_pool_prices = json.load(f)
 
     for pool_id, symbol in mainnet_core_pools:
-        prices = subgraph.get_twap_price_pool(
-            pool_id=pool_id,
-            chain=GqlChain.MAINNET,
-            date_range=date_range,
-        )
         loaded_price = loaded_pool_prices.get(symbol)
         if loaded_price:
+            prices = subgraph.get_twap_price_pool(
+                pool_id=pool_id,
+                chain=GqlChain.MAINNET,
+                date_range=date_range,
+            )
             assert pytest.approx(
                 prices.bpt_price.twap_price, rel=Decimal(0.01)
             ) == Decimal(loaded_price.get("bpt_price"))
