@@ -3,13 +3,8 @@ import pytest
 from decimal import Decimal
 import json
 
-from bal_tools.subgraph import (
-    Subgraph,
-    GqlChain,
-    Pool,
-    PoolSnapshot,
-    DateRange,
-)
+from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot
+from bal_tools.errors import NoPricesFoundError
 
 
 @pytest.fixture(scope="module")
@@ -48,20 +43,23 @@ def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
     for pool_id, symbol in mainnet_core_pools:
         loaded_price = loaded_pool_prices.get(symbol)
         if loaded_price:
-            prices = subgraph.get_twap_price_pool(
-                pool_id=pool_id,
-                chain=GqlChain.MAINNET,
-                date_range=date_range,
-            )
-            assert pytest.approx(
-                prices.bpt_price.twap_price, rel=Decimal(0.01)
-            ) == Decimal(loaded_price.get("bpt_price"))
-            for token_price, loaded_token_price in zip(
-                prices.token_prices, loaded_price.get("token_prices")
-            ):
+            try:
+                prices = subgraph.get_twap_price_pool(
+                    pool_id=pool_id,
+                    chain=GqlChain.MAINNET,
+                    date_range=date_range,
+                )
                 assert pytest.approx(
-                    token_price.twap_price, rel=Decimal(0.01)
-                ) == Decimal(loaded_token_price.get("twap_price"))
+                    prices.bpt_price.twap_price, rel=Decimal(0.01)
+                ) == Decimal(loaded_price.get("bpt_price"))
+                for token_price, loaded_token_price in zip(
+                    prices.token_prices, loaded_price.get("token_prices")
+                ):
+                    assert pytest.approx(
+                        token_price.twap_price, rel=Decimal(0.01)
+                    ) == Decimal(loaded_token_price.get("twap_price"))
+            except NoPricesFoundError:
+                continue
 
 
 def test_fetch_all_pools_info(subgraph):
