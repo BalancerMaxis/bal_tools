@@ -5,6 +5,7 @@ import re
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import Union, List, Callable, Dict
+import warnings
 
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
@@ -14,6 +15,7 @@ from bal_addresses import AddrBook
 from typing import Union, List, Callable, Dict
 from .utils import get_abi, flatten_nested_dict
 from .models import *
+from .errors import NoPricesFoundError
 
 
 graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
@@ -32,12 +34,13 @@ AURA_SUBGRAPHS_BY_CHAIN = {
 
 
 class Subgraph:
-    def __init__(self, chain: str = "mainnet"):
+    def __init__(self, chain: str = "mainnet", silence_warnings: bool = False):
         if chain not in AddrBook.chain_ids_by_name.keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
         self.subgraph_url = {}
-
+        if silence_warnings:
+            warnings.filterwarnings('ignore', module='bal_tools.subgraph')
         self.custom_price_logic: Dict[str, Callable] = {}
 
     def get_subgraph_url(self, subgraph="core") -> str:
@@ -90,6 +93,7 @@ class Subgraph:
                         if urlparse(url).scheme in ["http", "https"]:
                             graph_api_key = os.getenv("GRAPH_API_KEY")
                             if "${keys.graph}" in url and not graph_api_key:
+                                warnings.warn(f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}", UserWarning)
                                 break
                             return url.replace("${keys.graph}", graph_api_key)
                     except AttributeError:
@@ -277,7 +281,7 @@ class Subgraph:
                 if end_date_ts >= int(item["timestamp"]) >= start_date_ts
             ]
             if not prices:
-                raise ValueError(f"No prices found for {address}")
+                raise NoPricesFoundError(f"No prices found for {address} on {chain} between {start_date_ts} UTC and {end_date_ts} UTC")
             return TWAPResult(address=address, twap_price=sum(prices) / len(prices))
 
         results = [calc_twap(addr) for addr in addresses]
