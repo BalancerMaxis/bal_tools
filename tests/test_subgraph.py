@@ -90,10 +90,6 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
         pytest.skip(
             f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
         )
-    if subgraph_all_chains.chain == "fraxtal" and subgraph_type == "blocks":
-        pytest.skip(
-            f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
-        )
     os.environ["GRAPH_API_KEY"] = (
         os.getenv("GRAPH_API_KEY") if have_thegraph_key else ""
     )
@@ -104,8 +100,8 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
 
 
 def test_warning_configuration(monkeypatch):
-    monkeypatch.setenv('GRAPH_API_KEY', '')
-    
+    monkeypatch.setenv("GRAPH_API_KEY", "")
+
     # Should emit warning
     with pytest.warns(UserWarning):
         subgraph = Subgraph(silence_warnings=False)
