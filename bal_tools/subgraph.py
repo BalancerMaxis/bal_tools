@@ -24,16 +24,11 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "mainnet": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-mainnet/api",
     "arbitrum": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-arbitrum/api",
     "optimism": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-optimism/api",
-    "gnosis": (
-        "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-gnosis/api"
-    ),
-    "base": (
-        "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-base/api"
-    ),
+    "gnosis": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-gnosis/api",
+    "base": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-base/api",
     "polygon": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-polygon/api",
-    "zkevm": (
-        "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-zkevm/api"
-    ),
+    "zkevm": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-zkevm/api",
+    "fraxtal": "https://graph.data.aura.finance/subgraphs/name/aura-finance-fraxtal",
     "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
 }
 
@@ -263,7 +258,7 @@ class Subgraph:
             and one_year_ago_ts - margin <= end_date_ts <= current_ts + margin
         ):
             raise ValueError("date range should be within the past year")
-        
+
         if end_date_ts < start_date_ts:
             raise ValueError("end date should be after start date")
 
@@ -395,4 +390,3 @@ class Subgraph:
             if len(result["poolSnapshots"]) < pools_per_req:
                 break
         return all_pools
-
