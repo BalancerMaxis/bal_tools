@@ -213,7 +213,13 @@ class Subgraph:
         transport = RequestsHTTPTransport(
             url=url or self.subgraph_url[subgraph], retries=retries
         )
-        client = Client(transport=transport, fetch_schema_from_transport=False)
+        client = Client(
+            transport=transport,
+            fetch_schema_from_transport=False,
+            retries=2,
+            retry_backoff_factor=0.5,
+            retry_status_forcelist=[429, 500, 502, 503, 504, 520],
+        )
 
         # retrieve the query from its file and execute it
         with open(f"{graphql_base_path}/{subgraph}/{query}.gql") as f:
