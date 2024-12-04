@@ -90,13 +90,22 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
         pytest.skip(
             f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
         )
-    os.environ["GRAPH_API_KEY"] = (
-        os.getenv("GRAPH_API_KEY") if have_thegraph_key else ""
-    )
+
+    if not have_thegraph_key:
+        # temporarily remove the key
+        cached_graph_api_key = os.environ["GRAPH_API_KEY"]
+        os.environ["GRAPH_API_KEY"] = ""
+        subgraph_all_chains.set_silence_warnings(True)
+
     url = subgraph_all_chains.get_subgraph_url(subgraph_type)
 
     assert url is not None
     assert url is not ""
+
+    if not have_thegraph_key:
+        # restore the key
+        os.environ["GRAPH_API_KEY"] = cached_graph_api_key
+        subgraph_all_chains.set_silence_warnings(False)
 
 
 def test_warning_configuration(monkeypatch):
