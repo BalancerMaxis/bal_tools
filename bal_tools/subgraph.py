@@ -40,8 +40,14 @@ class Subgraph:
         self.chain = chain
         self.subgraph_url = {}
         if silence_warnings:
-            warnings.filterwarnings('ignore', module='bal_tools.subgraph')
+            self.set_silence_warnings(True)
         self.custom_price_logic: Dict[str, Callable] = {}
+
+    def set_silence_warnings(self, silence_warnings: bool):
+        if silence_warnings:
+            warnings.filterwarnings("ignore", module="bal_tools.subgraph")
+        else:
+            warnings.filterwarnings("default", module="bal_tools.subgraph")
 
     def get_subgraph_url(self, subgraph="core") -> str:
         """
@@ -93,7 +99,10 @@ class Subgraph:
                         if urlparse(url).scheme in ["http", "https"]:
                             graph_api_key = os.getenv("GRAPH_API_KEY")
                             if "${keys.graph}" in url and not graph_api_key:
-                                warnings.warn(f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}", UserWarning)
+                                warnings.warn(
+                                    f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
+                                    UserWarning,
+                                )
                                 break
                             return url.replace("${keys.graph}", graph_api_key)
                     except AttributeError:
@@ -202,7 +211,10 @@ class Subgraph:
                     )
 
         transport = RequestsHTTPTransport(
-            url=url or self.subgraph_url[subgraph], retries=retries
+            url=url or self.subgraph_url[subgraph],
+            retries=retries,
+            retry_backoff_factor=0.5,
+            retry_status_forcelist=[429, 500, 502, 503, 504, 520],
         )
         client = Client(transport=transport, fetch_schema_from_transport=False)
 
@@ -281,7 +293,9 @@ class Subgraph:
                 if end_date_ts >= int(item["timestamp"]) >= start_date_ts
             ]
             if not prices:
-                raise NoPricesFoundError(f"No prices found for {address} on {chain} between {start_date_ts} UTC and {end_date_ts} UTC")
+                raise NoPricesFoundError(
+                    f"No prices found for {address} on {chain} between {start_date_ts} UTC and {end_date_ts} UTC"
+                )
             return TWAPResult(address=address, twap_price=sum(prices) / len(prices))
 
         results = [calc_twap(addr) for addr in addresses]
