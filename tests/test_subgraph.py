@@ -82,7 +82,9 @@ def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_b
 
 @pytest.mark.parametrize("have_thegraph_key", [True, False])
 @pytest.mark.parametrize("subgraph_type", ["core", "gauges", "blocks", "aura"])
-def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph_type):
+def test_find_all_subgraph_urls(
+    subgraph_all_chains, have_thegraph_key, subgraph_type, monkeypatch
+):
     if subgraph_all_chains.chain in ["sepolia", "mode"] and subgraph_type in [
         "aura",
         "blocks",
@@ -92,9 +94,7 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
         )
 
     if not have_thegraph_key:
-        # temporarily remove the key
-        cached_graph_api_key = os.environ["GRAPH_API_KEY"]
-        os.environ["GRAPH_API_KEY"] = ""
+        monkeypatch.setenv("GRAPH_API_KEY", "")
         subgraph_all_chains.set_silence_warnings(True)
 
     url = subgraph_all_chains.get_subgraph_url(subgraph_type)
@@ -103,8 +103,6 @@ def test_find_all_subgraph_urls(subgraph_all_chains, have_thegraph_key, subgraph
     assert url is not ""
 
     if not have_thegraph_key:
-        # restore the key
-        os.environ["GRAPH_API_KEY"] = cached_graph_api_key
         subgraph_all_chains.set_silence_warnings(False)
 
 
