@@ -177,7 +177,7 @@ class Snapshot:
                     "first": limit,
                     "skip": offset,
                     "snapshot_id": snapshot_id,
-                    "voter": "multisigs/vote_incentive_recycling",
+                    "voter": "multisigs/maxi_omni",
                     "space": "gauges.aurafinance.eth",
                 },
             )

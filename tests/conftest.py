@@ -60,7 +60,7 @@ def addr_book():
 
 @pytest.fixture(scope="module")
 def msig_name():
-    return "multisigs/vote_incentive_recycling"
+    return "multisigs/maxi_omni"
 
 
 @pytest.fixture(scope="module")
@@ -78,6 +78,7 @@ def erc20_abi():
 def bribe_market_abi():
     with open("tests/abi/bribe_market.json", "r") as file:
         return json.load(file)
+
 
 @pytest.fixture(scope="module")
 def bridge_abi():
