@@ -209,7 +209,6 @@ class Subgraph:
                     raise ValueError(
                         f"Subgraph url not found for {subgraph} on chain {self.chain}"
                     )
-
         transport = RequestsHTTPTransport(
             url=url or self.subgraph_url[subgraph],
             retries=retries,
@@ -218,9 +217,13 @@ class Subgraph:
         )
         client = Client(transport=transport, fetch_schema_from_transport=False)
 
-        # retrieve the query from its file and execute it
-        with open(f"{graphql_base_path}/{subgraph}/{query}.gql") as f:
-            gql_query = gql(f.read())
+        if "{" and "}" in query:
+            # `query` is the actual query itself
+            gql_query = gql(query)
+        else:
+            # `query` is the filename; load it from the graphql folder
+            with open(f"{graphql_base_path}/{subgraph}/{query}.gql") as f:
+                gql_query = gql(f.read())
         result = client.execute(gql_query, variable_values=params)
 
         return result
