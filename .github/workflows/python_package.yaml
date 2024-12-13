@@ -29,4 +29,4 @@ jobs:
           GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
         run: |
           pip install -r bal_tools/requirements-dev.txt
-          pytest
+          pytest -x
