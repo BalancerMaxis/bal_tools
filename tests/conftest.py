@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-exempt_chains = ["fantom", "goerli"]
+exempt_chains = ["fantom", "goerli", "sonic"]
 chains = [chain for chain in list(chain_ids_by_name()) if chain not in exempt_chains]
 
 
