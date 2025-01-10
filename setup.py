@@ -13,7 +13,13 @@ setup(
     long_description=LONG_DESCRIPTION,
     packages=find_packages(),
     include_package_data=True,  # Automatically include non-Python files
-    package_data={"bal_tools": ["abi/*.json", "graphql/**/*.gql", "safe_tx_builder/templates/*.json"]},
+    package_data={
+        "bal_tools": [
+            "abi/*.json",
+            "graphql/**/*.gql",
+            "safe_tx_builder/templates/*.json",
+        ]
+    },
     url="https://github.com/BalancerMaxis/bal_tools",
     install_requires=[
         "setuptools>=42",
@@ -22,7 +28,7 @@ setup(
         "web3",
         "gql[requests]",
         "requests",
-        "pydantic==2.7.4",
+        "pydantic==2.10.5",
     ],
     keywords=["python", "first package"],
     classifiers=[
