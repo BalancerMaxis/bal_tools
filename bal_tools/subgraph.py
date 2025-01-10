@@ -10,10 +10,9 @@ import warnings
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from web3 import Web3
-from bal_addresses import AddrBook
 
 from typing import Union, List, Callable, Dict
-from .utils import get_abi, flatten_nested_dict
+from .utils import get_abi, flatten_nested_dict, chain_ids_by_name
 from .models import *
 from .errors import NoPricesFoundError
 
@@ -35,7 +34,7 @@ AURA_SUBGRAPHS_BY_CHAIN = {
 
 class Subgraph:
     def __init__(self, chain: str = "mainnet", silence_warnings: bool = False):
-        if chain not in AddrBook.chain_ids_by_name.keys():
+        if chain not in chain_ids_by_name().keys():
             raise ValueError(f"Invalid chain: {chain}")
         self.chain = chain
         self.subgraph_url = {}

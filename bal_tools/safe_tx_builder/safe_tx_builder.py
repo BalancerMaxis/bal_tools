@@ -5,7 +5,7 @@ import os
 from bal_addresses import AddrBook
 
 from .models import *
-from ..utils import is_address
+from ..utils import is_address, chain_ids_by_name
 
 
 class SafeTxBuilder:
@@ -23,17 +23,17 @@ class SafeTxBuilder:
         if cls._instance is None:
             cls._instance = super(SafeTxBuilder, cls).__new__(cls)
             cls._instance._initialized = False
-        
+
         if safe_address is not None or cls._last_config is None:
             cls._last_config = {
-                'safe_address': safe_address,
-                'chain_name': chain_name,
-                'version': version,
-                'timestamp': timestamp,
-                'tx_builder_version': tx_builder_version
+                "safe_address": safe_address,
+                "chain_name": chain_name,
+                "version": version,
+                "timestamp": timestamp,
+                "tx_builder_version": tx_builder_version,
             }
             cls._instance._initialize(**cls._last_config)
-        
+
         return cls._instance
 
     def _initialize(
@@ -45,8 +45,10 @@ class SafeTxBuilder:
         tx_builder_version: str,
     ):
         self.chain_name = chain_name
-        self.chain_id = str(AddrBook.chain_ids_by_name[chain_name])
-        self.addr_book = AddrBook(AddrBook.chain_names_by_id[int(self.chain_id)]).flatbook
+        self.chain_id = str(chain_ids_by_name()[chain_name])
+        self.addr_book = AddrBook(
+            AddrBook.chain_names_by_id[int(self.chain_id)]
+        ).flatbook
         self.safe_address = self._resolve_address(safe_address)
         self.version = version
         self.timestamp = timestamp if timestamp else datetime.now(timezone.utc)

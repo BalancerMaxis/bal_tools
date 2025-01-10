@@ -7,6 +7,7 @@ from bal_tools.pools_gauges import BalPoolsGauges
 from bal_tools.subgraph import Subgraph
 from bal_tools.ecosystem import Aura
 from bal_tools.safe_tx_builder import SafeTxBuilder
+from bal_tools.utils import chain_ids_by_name
 
 from web3 import Web3
 from dotenv import load_dotenv
@@ -15,11 +16,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 exempt_chains = ["fantom", "goerli"]
-chains = [
-    chain
-    for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"])
-    if chain not in exempt_chains
-]
+chains = [chain for chain in list(chain_ids_by_name()) if chain not in exempt_chains]
 
 
 @pytest.fixture(scope="module")
