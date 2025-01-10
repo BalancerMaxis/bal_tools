@@ -2,8 +2,6 @@ from typing import Optional, Union
 from datetime import datetime, timezone
 import os
 
-from bal_addresses import AddrBook
-
 from .models import *
 from ..utils import is_address, chain_ids_by_name
 
@@ -46,10 +44,7 @@ class SafeTxBuilder:
     ):
         self.chain_name = chain_name
         self.chain_id = str(chain_ids_by_name()[chain_name])
-        self.addr_book = AddrBook(
-            AddrBook.chain_names_by_id[int(self.chain_id)]
-        ).flatbook
-        self.safe_address = self._resolve_address(safe_address)
+        self.safe_address = safe_address
         self.version = version
         self.timestamp = timestamp if timestamp else datetime.now(timezone.utc)
         self.tx_builder_version = tx_builder_version
@@ -69,12 +64,6 @@ class SafeTxBuilder:
             file_content = f.read()
 
         return model.model_validate_json(file_content)
-
-    def _resolve_address(self, identifier: str) -> str:
-        if is_address(identifier):
-            return identifier
-
-        return self.addr_book[identifier]
 
     def _load_payload_metadata(self):
         self.base_payload.version = self.version

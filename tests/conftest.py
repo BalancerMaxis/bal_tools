@@ -2,7 +2,6 @@ import pytest
 import json
 import os
 
-from bal_addresses import AddrBook
 from bal_tools.pools_gauges import BalPoolsGauges
 from bal_tools.subgraph import Subgraph
 from bal_tools.ecosystem import Aura
@@ -51,18 +50,8 @@ def aura(chain):
 
 
 @pytest.fixture(scope="module")
-def addr_book():
-    return AddrBook("mainnet").flatbook
-
-
-@pytest.fixture(scope="module")
-def msig_name():
-    return "multisigs/maxi_omni"
-
-
-@pytest.fixture(scope="module")
-def safe_tx_builder(msig_name) -> SafeTxBuilder:
-    return SafeTxBuilder(msig_name)
+def safe_tx_builder() -> SafeTxBuilder:
+    return SafeTxBuilder("0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f")
 
 
 @pytest.fixture(scope="module")
