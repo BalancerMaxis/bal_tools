@@ -7,28 +7,24 @@ from bal_tools.safe_tx_builder.models import BasePayload
 def test_safe_contract(
     safe_tx_builder: SafeTxBuilder,
     erc20_abi,
-    bribe_market_abi,
-    addr_book,
-    msig_name,
+    bribe_market_abi
 ):
     usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
     bribe_market_address = "0x45Bc37b18E73A42A4a826357a8348cDC042cCBBc"
 
-    usdc = SafeContract("tokens/USDC", erc20_abi)
+    usdc = SafeContract(usdc_address, erc20_abi)
     usdc.approve(bribe_market_address, 100e18)
 
     bribe_market = SafeContract(bribe_market_address, bribe_market_abi)
     bribe_market.depositBribe(
         "0x0000000000000000000000000000000000000000000000000000000000000000",
-        "tokens/USDC",
+        usdc_address,
         1e18,
         0,
         2,
     )
 
     payload = safe_tx_builder.output_payload("tests/payload_outputs/bribe.json")
-
-    assert safe_tx_builder.safe_address == addr_book[msig_name]
 
     assert payload.transactions[0].to == usdc_address
     assert payload.transactions[0].contractMethod.name == "approve"
@@ -57,10 +53,12 @@ def test_safe_contract(
 
 
 def test_multiple_functions_with_same_name(bridge_abi):
-    builder = SafeTxBuilder("multisigs/dao")
+    usdc_address = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+    dao_msig = "0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f"
+    builder = SafeTxBuilder(dao_msig)
     bridge = SafeContract("0x88ad09518695c6c3712AC10a214bE5109a655671", bridge_abi)
 
-    bridge.relayTokens("tokens/USDC", "multisigs/dao", int(1e18))
-    bridge.relayTokens("tokens/USDC", int(1e18))
-    
+    bridge.relayTokens(usdc_address, dao_msig, int(1e18))
+    bridge.relayTokens(usdc_address, int(1e18))
+
     builder.output_payload("tests/payload_outputs/multiple_names.json")

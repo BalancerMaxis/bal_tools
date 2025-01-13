@@ -2,11 +2,11 @@ import pytest
 import json
 import os
 
-from bal_addresses import AddrBook
 from bal_tools.pools_gauges import BalPoolsGauges
 from bal_tools.subgraph import Subgraph
 from bal_tools.ecosystem import Aura
 from bal_tools.safe_tx_builder import SafeTxBuilder
+from bal_tools.utils import chain_ids_by_name
 
 from web3 import Web3
 from dotenv import load_dotenv
@@ -14,12 +14,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-exempt_chains = ["fantom", "goerli"]
-chains = [
-    chain
-    for chain in list(AddrBook.chains["CHAIN_IDS_BY_NAME"])
-    if chain not in exempt_chains
-]
+exempt_chains = ["fantom", "goerli", "sonic"]
+chains = [chain for chain in list(chain_ids_by_name()) if chain not in exempt_chains]
 
 
 @pytest.fixture(scope="module")
@@ -54,18 +50,8 @@ def aura(chain):
 
 
 @pytest.fixture(scope="module")
-def addr_book():
-    return AddrBook("mainnet").flatbook
-
-
-@pytest.fixture(scope="module")
-def msig_name():
-    return "multisigs/maxi_omni"
-
-
-@pytest.fixture(scope="module")
-def safe_tx_builder(msig_name) -> SafeTxBuilder:
-    return SafeTxBuilder(msig_name)
+def safe_tx_builder() -> SafeTxBuilder:
+    return SafeTxBuilder("0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f")
 
 
 @pytest.fixture(scope="module")

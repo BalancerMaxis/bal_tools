@@ -8,5 +8,3 @@ gql[requests]
 python-dotenv
 pydantic==2.7.4
 json-fix
-
-git+https://github.com/BalancerMaxis/bal_addresses@0.9.9

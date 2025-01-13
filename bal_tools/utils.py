@@ -1,8 +1,9 @@
 from web3 import Web3
 from typing import Union, List, Dict
 import json
-import os
 from importlib.resources import files
+
+import requests
 
 
 ### These functions are to deal with differing web3 versions and the need to use 5.x for legacy brownie code
@@ -30,7 +31,13 @@ def flatten_nested_dict(d):
     result = d.copy()
     for key, value in list(result.items()):
         if isinstance(value, dict):
-            if key not in ['dynamicData', 'staking']:
+            if key not in ["dynamicData", "staking"]:
                 result.pop(key)
                 result.update(value)
     return result
+
+
+def chain_ids_by_name():
+    chains_raw = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/extras/chains.json"
+    chains = requests.get(chains_raw).json()
+    return chains["CHAIN_IDS_BY_NAME"]
