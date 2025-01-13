@@ -18,7 +18,7 @@ class SafeContract:
         self.tx_builder = SafeTxBuilder()
         if not self.tx_builder._initialized:
             raise RuntimeError("SafeTxBuilder must be initialized before using SafeContract")
-        self.address = self.tx_builder._resolve_address(address)
+        self.address = address
         self.abi = self._load_abi(abi, abi_file_path)
 
     def __getattr__(self, attribute):
@@ -71,9 +71,6 @@ class SafeContract:
             tx.contractInputsValues = None  # type: ignore
 
         for arg, input_type in zip(args, func.inputs):
-            if input_type.type == "address":
-                arg = self.tx_builder._resolve_address(arg)
-
             input_template = self.tx_builder.load_template(TemplateType.INPUT_TYPE)
             input_template.name = input_type.name
             input_template.type = input_type.type
