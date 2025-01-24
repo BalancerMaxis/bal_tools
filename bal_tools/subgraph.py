@@ -213,6 +213,10 @@ class Subgraph:
             retries=retries,
             retry_backoff_factor=0.5,
             retry_status_forcelist=[429, 500, 502, 503, 504, 520],
+            headers={
+                "x-graphql-client-name": "Maxxis",
+                "x-graphql-client-version": "bal_tools/v0.1.15",
+            },
         )
         client = Client(transport=transport, fetch_schema_from_transport=False)
 
