@@ -5,7 +5,14 @@ from .utils import to_checksum_address, flatten_nested_dict
 from gql.transport.exceptions import TransportQueryError
 from bal_tools.subgraph import Subgraph
 from bal_tools.errors import NoResultError
-from bal_tools.models import PoolData, GaugePoolData, GaugeData, CorePools, PoolId, Symbol
+from bal_tools.models import (
+    PoolData,
+    GaugePoolData,
+    GaugeData,
+    CorePools,
+    PoolId,
+    Symbol,
+)
 
 GITHUB_RAW_OUTPUTS = (
     "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/outputs"
@@ -23,7 +30,9 @@ class BalPoolsGauges:
             "apiv3", "vebal_get_voting_list"
         )["veBalGetVotingList"]
         if use_cached_core_pools:
-            core_pools_data = requests.get(f"{GITHUB_RAW_OUTPUTS}/core_pools.json").json()
+            core_pools_data = requests.get(
+                f"{GITHUB_RAW_OUTPUTS}/core_pools.json"
+            ).json()
             self.core_pools = CorePools(pools=core_pools_data.get(self.chain, {}))
         else:
             self.core_pools = self.build_core_pools()
@@ -58,10 +67,14 @@ class BalPoolsGauges:
                 results[user_address] = float(share["balance"])
         return results
 
-    def get_gauge_deposit_shares(self, gauge_address: str, block: int) -> Dict[str, int]:
+    def get_gauge_deposit_shares(
+        self, gauge_address: str, block: int
+    ) -> Dict[str, int]:
         gauge_address = to_checksum_address(gauge_address)
         variables = {"gaugeAddress": gauge_address, "block": int(block)}
-        data = self.subgraph.fetch_graphql_data("gauges", "fetch_gauge_shares", variables)
+        data = self.subgraph.fetch_graphql_data(
+            "gauges", "fetch_gauge_shares", variables
+        )
         results = {}
         if "gaugeShares" in data:
             for share in data["gaugeShares"]:
@@ -71,9 +84,13 @@ class BalPoolsGauges:
 
     def get_preferential_gauge(self, pool_id: str) -> bool:
         try:
-            return to_checksum_address(self.subgraph.fetch_graphql_data(
-                "apiv3", "get_pool_preferential_gauge", {"chain": self.chain.upper(), "poolId": pool_id}
-            )["poolGetPool"]["staking"]["gauge"]["gaugeAddress"])
+            return to_checksum_address(
+                self.subgraph.fetch_graphql_data(
+                    "apiv3",
+                    "get_pool_preferential_gauge",
+                    {"chain": self.chain.upper(), "poolId": pool_id},
+                )["poolGetPool"]["staking"]["gauge"]["gaugeAddress"]
+            )
         except:
             return None
 
@@ -120,22 +137,31 @@ class BalPoolsGauges:
         """
         query all gauges from the apiv3 subgraph
         """
-        data = self.subgraph.fetch_graphql_data("apiv3", "get_gauges", {"chain": self.chain.upper()})
+        data = self.subgraph.fetch_graphql_data(
+            "apiv3", "get_gauges", {"chain": self.chain.upper()}
+        )
         all_gauges = []
         for pool in data["poolGetPools"]:
             gauge_pool = GaugePoolData(**flatten_nested_dict(pool))
-            if gauge_pool.staking is not None and gauge_pool.staking.get('gauge') is not None:
-                gauge = gauge_pool.staking['gauge']
-                all_gauges.append(GaugeData(
-                    address=gauge['gaugeAddress'],
-                    symbol=f"{gauge_pool.symbol}-gauge"
-                ))
+            if (
+                gauge_pool.staking is not None
+                and gauge_pool.staking.get("gauge") is not None
+            ):
+                gauge = gauge_pool.staking["gauge"]
+                all_gauges.append(
+                    GaugeData(
+                        address=gauge["gaugeAddress"],
+                        symbol=f"{gauge_pool.symbol}-gauge",
+                    )
+                )
                 if include_other_gauges:
-                    for other_gauge in gauge.get('otherGauges', []):
-                        all_gauges.append(GaugeData(
-                            address=other_gauge['id'],
-                            symbol=f"{gauge_pool.symbol}-gauge"
-                        ))
+                    for other_gauge in gauge.get("otherGauges", []):
+                        all_gauges.append(
+                            GaugeData(
+                                address=other_gauge["id"],
+                                symbol=f"{gauge_pool.symbol}-gauge",
+                            )
+                        )
         return all_gauges
 
     def query_all_pools(self) -> List[PoolData]:
@@ -143,11 +169,13 @@ class BalPoolsGauges:
         query all pools from the apiv3 subgraph
         filters out disabled pools
         """
-        data = self.subgraph.fetch_graphql_data("apiv3", "get_pools", {"chain": self.chain.upper()})
+        data = self.subgraph.fetch_graphql_data(
+            "apiv3", "get_pools", {"chain": self.chain.upper()}
+        )
         all_pools = []
         for pool in data["poolGetPools"]:
             pool_data = PoolData(**flatten_nested_dict(pool))
-            if pool_data.dynamicData['swapEnabled']:
+            if pool_data.dynamicData["swapEnabled"]:
                 all_pools.append(pool_data)
         return all_pools
 
@@ -172,7 +200,9 @@ class BalPoolsGauges:
         """
         try:
             data = self.subgraph.fetch_graphql_data(
-                "apiv3", "get_pool_tvl", {"chain": self.chain.upper(), "poolId": pool_id}
+                "apiv3",
+                "get_pool_tvl",
+                {"chain": self.chain.upper(), "poolId": pool_id},
             )
         except TransportQueryError:
             return 0
@@ -200,7 +230,9 @@ class BalPoolsGauges:
         dictionary of the format {pool_id: symbol}
         """
         filtered_pools = {}
-        data = self.subgraph.fetch_graphql_data("core", "liquid_pools_protocol_yield_fee")
+        data = self.subgraph.fetch_graphql_data(
+            "core", "liquid_pools_protocol_yield_fee"
+        )
         try:
             for pool in data["pools"]:
                 if self.get_pool_tvl(pool["id"]) >= 100_000:
