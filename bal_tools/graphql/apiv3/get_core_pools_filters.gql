@@ -1,0 +1,21 @@
+query CorePoolsFilters($where: GqlPoolFilter) {
+  poolGetPools(where: $where) {
+    chain
+    symbol
+    id
+    address
+    tags
+    type
+    version
+    dynamicData {
+      totalLiquidity
+      aggregateSwapFee
+      aggregateYieldFee
+    }
+    poolTokens {
+      priceRateProviderData {
+        address
+      }
+    }
+  }
+}

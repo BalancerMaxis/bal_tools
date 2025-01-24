@@ -1,4 +1,5 @@
 from typing import Dict, List
+import json
 import requests
 from .utils import to_checksum_address, flatten_nested_dict
 
@@ -270,7 +271,7 @@ class BalPoolsGauges:
 
     def build_core_pools(self) -> CorePools:
         """
-        build the core pools dictionary by taking pools from `get_pools_with_rate_provider` and:
+        build the core pools dictionary by taking pools from `get_liquid_pools_with_protocol_yield_fee` and:
         - confirm the pool has an active gauge on the vebal voting list
         - check if the pool has an alive preferential gauge
         - add pools from whitelist
@@ -319,3 +320,102 @@ class BalPoolsGauges:
             pass
 
         return CorePools(pools={PoolId(k): Symbol(v) for k, v in core_pools.items()})
+
+    def build_core_pools_apiv3(self) -> CorePools:
+        """
+        build the core pools dictionary by taking pools from the vebal voting list and
+        run the core pools filter function on them
+        """
+        candidates = [pool["id"] for pool in self.vebal_voting_list]
+        core_pools_extended = self.filter_core_pool_candidates(candidates)
+
+        core_pools = {
+            "mainnet": {},
+            "polygon": {},
+            "arbitrum": {},
+            "gnosis": {},
+            "zkevm": {},
+            "avalanche": {},
+            "base": {},
+            "mode": {},
+            "fraxtal": {},
+        }
+
+        # summarise core pools into core_pools dict
+        for pool in core_pools_extended:
+            if not pool["chain"].lower() in core_pools:
+                continue
+            core_pools[pool["chain"].lower()][pool["id"]] = pool["symbol"]
+
+        # sort pools alphabetically by id
+        for chain in core_pools.copy():
+            core_pools[chain] = dict(sorted(core_pools[chain].items()))
+
+        # apply whitelist and blacklist
+        for chain in core_pools.copy():
+            # add pools from whitelist
+            whitelist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_whitelist.json")
+            whitelist.raise_for_status()
+            whitelist = whitelist.json()
+            try:
+                for pool, symbol in whitelist[chain].items():
+                    if pool not in core_pools[chain]:
+                        core_pools[chain][pool] = symbol
+            except KeyError:
+                # no results for this chain
+                pass
+
+            # remove pools from blacklist
+            blacklist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_blacklist.json")
+            blacklist.raise_for_status()
+            blacklist = blacklist.json()
+            try:
+                for pool in blacklist[chain]:
+                    if pool in core_pools[chain]:
+                        del core_pools[chain][pool]
+            except KeyError:
+                # no results for this chain
+                pass
+
+        # return core_pools, core_pools_extended
+
+        with open("core_pools_apiv3.json", "w") as f:
+            json.dump(core_pools_extended, f, indent=2)
+            f.write("\n")
+
+        with open("core_pools_old_style.json", "w") as f:
+            json.dump(core_pools, f, indent=2)
+            f.write("\n")
+
+    def filter_core_pool_candidates(self, candidates: List[str]) -> List[str]:
+        """
+        filter a list of core pool candidates based on:
+        - having a tvl of >$100k
+        - being a boosted pool OR
+        - having a non zero rate provider
+        """
+        data = self.subgraph.fetch_graphql_data(
+            "apiv3",
+            "get_core_pools_filters",
+            {"where": {"minTvl": 100_000, "idIn": candidates}},
+        )
+        core_pools = []
+        for pool in data["poolGetPools"]:
+            # v3 boosted pools are always core pools
+            if "BOOSTED" in pool["tags"]:
+                core_pools.append(pool)
+                continue
+
+            # pools with a non zero rate provider are core pools
+            for rate_provider in pool["poolTokens"]:
+                if rate_provider.get("priceRateProviderData"):
+                    if (
+                        rate_provider["priceRateProviderData"].get("address")
+                        != "0x0000000000000000000000000000000000000000"
+                    ):
+                        core_pools.append(pool)
+                        break
+
+        # TODO: remove pools that are yield fee exempt
+
+        return core_pools
