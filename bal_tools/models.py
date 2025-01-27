@@ -1,9 +1,8 @@
 from typing import Optional, List, Tuple, Dict, NewType
 from decimal import Decimal
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import Enum
 from pydantic import BaseModel, field_validator, model_validator, Field
-import json_fix
 
 
 class GqlChain(Enum):
