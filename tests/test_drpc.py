@@ -12,8 +12,9 @@ def test_drpc_by_chain_dict_syntax(DRPC_KEY):
 
     for chain in chains:
         assert w3_by_chain[chain].eth
-        
+
     assert sorted(w3_by_chain.keys()) == sorted(chains)
+
 
 def test_drpc_by_chain_dot_syntax(DRPC_KEY):
     if not DRPC_KEY:

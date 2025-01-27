@@ -8,16 +8,16 @@ import json
 EXAMPLE_PREFERENTIAL_GAUGES = {
     "mainnet": (  # wsteTH-WETH
         "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c2",
-        "0x5C0F23A5c1be65Fa710d385814a7Fd1Bda480b1C"
+        "0x5C0F23A5c1be65Fa710d385814a7Fd1Bda480b1C",
     ),
     "gnosis": (  # wstETH-GNO
         "0x4683e340a8049261057d5ab1b29c8d840e75695e00020000000000000000005a",
-        "0xB812249d60b80c7Cbc9398E382eD6DFDF82E23D2"
+        "0xB812249d60b80c7Cbc9398E382eD6DFDF82E23D2",
     ),
     "arbitrum": (  # RDNT-WETH
         "0x32df62dc3aed2cd6224193052ce665dc181658410002000000000000000003bd",
-        "0xcf9f895296F5e1D66a7D4dcf1d92e1B435E9f999"
-    )
+        "0xcf9f895296F5e1D66a7D4dcf1d92e1B435E9f999",
+    ),
 }
 EXAMPLE_CORE_POOLS = {
     "mainnet": (  # wsteTH-WETH
@@ -138,9 +138,10 @@ def test_query_all_pools(bal_pools_gauges):
     test return data of v3 AllGauges query
     """
     response = bal_pools_gauges.query_all_pools()
-    
+
     if len(response) > 0:
         assert isinstance(response[0], PoolData)
+
 
 def test_query_all_gauges(bal_pools_gauges):
     """
