@@ -16,6 +16,7 @@ query CorePoolsFilters($where: GqlPoolFilter) {
       priceRateProviderData {
         address
       }
+      isExemptFromProtocolYieldFee
     }
   }
 }

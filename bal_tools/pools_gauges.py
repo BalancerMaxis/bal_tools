@@ -4,6 +4,7 @@ import requests
 from .utils import to_checksum_address, flatten_nested_dict
 
 from gql.transport.exceptions import TransportQueryError
+from bal_tools.safe_tx_builder import ZERO_ADDRESS
 from bal_tools.subgraph import Subgraph
 from bal_tools.errors import NoResultError
 from bal_tools.models import (
@@ -401,21 +402,23 @@ class BalPoolsGauges:
         )
         core_pools = []
         for pool in data["poolGetPools"]:
-            # v3 boosted pools are always core pools
             if "BOOSTED" in pool["tags"]:
+                # v3 boosted pools are always core pools
                 core_pools.append(pool)
                 continue
 
-            # pools with a non zero rate provider are core pools
-            for rate_provider in pool["poolTokens"]:
-                if rate_provider.get("priceRateProviderData"):
-                    if (
-                        rate_provider["priceRateProviderData"].get("address")
-                        != "0x0000000000000000000000000000000000000000"
-                    ):
-                        core_pools.append(pool)
-                        break
-
-        # TODO: remove pools that are yield fee exempt
-
+            for pool_token in pool["poolTokens"]:
+                if pool_token["isExemptFromProtocolYieldFee"] == True:
+                    # pools that are yield fee exempt are not core pools
+                    break
+            else:
+                for pool_token in pool["poolTokens"]:
+                    if pool_token.get("priceRateProviderData"):
+                        if (
+                            pool_token["priceRateProviderData"].get("address")
+                            != ZERO_ADDRESS
+                        ):
+                            # pools with a non zero rate provider are core pools
+                            core_pools.append(pool)
+                            break
         return core_pools
