@@ -1,9 +1,11 @@
+# monkey patches the .__json__() method so that it can serialise custom objects
+import json_fix
+
 from typing import Optional, List, Tuple, Dict, NewType
 from decimal import Decimal
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import Enum
 from pydantic import BaseModel, field_validator, model_validator, Field
-import json_fix
 
 
 class GqlChain(Enum):
@@ -24,10 +26,11 @@ DateRange = Tuple[int, int]
 PoolId = NewType("PoolId", str)
 Symbol = NewType("Symbol", str)
 
+
 class CorePools(BaseModel):
     pools: Dict[PoolId, Symbol] = Field(default_factory=dict)
 
-    @field_validator('pools')
+    @field_validator("pools")
     @classmethod
     def validate_pools(cls, v):
         return {str(k): str(v) for k, v in v.items()}
@@ -138,7 +141,9 @@ class PoolSnapshot(BaseModel):
             return Decimal(0)
         return Decimal(v)
 
-    @field_validator("protocolFee", "swapFees", "swapVolume", "liquidity", mode="before")
+    @field_validator(
+        "protocolFee", "swapFees", "swapVolume", "liquidity", mode="before"
+    )
     @classmethod
     def str_to_decimal(cls, v):
         return Decimal(v)
