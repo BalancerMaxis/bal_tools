@@ -2,7 +2,6 @@ import pytest
 from gql.transport.exceptions import TransportQueryError
 from bal_tools.models import PoolData, GaugeData
 from bal_tools.models import CorePools
-import json
 
 
 EXAMPLE_PREFERENTIAL_GAUGES = {
@@ -110,15 +109,20 @@ def test_is_pool_exempt_from_yield_fee(bal_pools_gauges):
     assert bal_pools_gauges.is_pool_exempt_from_yield_fee(example)
 
 
-def test_build_core_pools(bal_pools_gauges):
+def test_build_core_pools(bal_pools_gauges, chains_prod):
     """
     confirm core_pools can be built and is a CorePools type
     """
-    try:
-        assert isinstance(bal_pools_gauges.build_core_pools(), CorePools)
-    except TransportQueryError as e:
-        if "Too Many Requests" in str(e):
-            pytest.skip(f"Skipping {bal_pools_gauges.chain}, too many requests")
+    if bal_pools_gauges.chain in chains_prod:
+        try:
+            assert isinstance(bal_pools_gauges.build_core_pools(), CorePools)
+        except TransportQueryError as e:
+            if "Too Many Requests" in str(e):
+                pytest.skip(f"Skipping {bal_pools_gauges.chain}, too many requests")
+    else:
+        pytest.skip(
+            f"Skipping {bal_pools_gauges.chain}, no core pools on a non production chain"
+        )
 
 
 def test_get_preferential_gauge(bal_pools_gauges):

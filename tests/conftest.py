@@ -6,7 +6,7 @@ from bal_tools.pools_gauges import BalPoolsGauges
 from bal_tools.subgraph import Subgraph
 from bal_tools.ecosystem import Aura
 from bal_tools.safe_tx_builder import SafeTxBuilder
-from bal_tools.utils import chain_ids_by_name
+from bal_tools.utils import chain_ids_by_name, chain_names_prod
 
 from web3 import Web3
 from dotenv import load_dotenv
@@ -27,6 +27,11 @@ def web3():
 def chain(request):
     chain = request.param
     return chain
+
+
+@pytest.fixture(scope="module")
+def chains_prod():
+    return chain_names_prod()
 
 
 @pytest.fixture(scope="module")
