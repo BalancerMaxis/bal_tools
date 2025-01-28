@@ -37,7 +37,7 @@ def test_invalid_chain():
 
 def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
     current_time = int(time.time())
-    hundred_days = (100 * 24 * 60 * 60)
+    hundred_days = 100 * 24 * 60 * 60
     if current_time - hundred_days > date_range[0]:
         pytest.skip("Skipping test due to stale timestamps (> 100 days old)")
 
