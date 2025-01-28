@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Union
 import json
 import requests
 from .utils import to_checksum_address, flatten_nested_dict
@@ -272,7 +272,7 @@ class BalPoolsGauges:
 
     def build_core_pools(
         self, return_all_chains=False, debug=False
-    ) -> CorePools | Dict:
+    ) -> Union[CorePools, Dict]:
         """
         build the core pools dictionary by taking pools from the vebal voting list and
         run the core pools filter function on them
