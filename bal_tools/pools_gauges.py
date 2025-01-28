@@ -270,65 +270,23 @@ class BalPoolsGauges:
                 return True
         print(f"Pool {pool_id} on {self.chain} has no alive preferential gauge")
 
-    def build_core_pools(self) -> CorePools:
-        """
-        build the core pools dictionary by taking pools from `get_liquid_pools_with_protocol_yield_fee` and:
-        - confirm the pool has an active gauge on the vebal voting list
-        - check if the pool has an alive preferential gauge
-        - add pools from whitelist
-        - remove pools from blacklist
-
-        returns:
-        CorePools object containing the core pools for the current chain
-        """
-        core_pools = self.get_liquid_pools_with_protocol_yield_fee()
-
-        for pool_id in core_pools.copy():
-            # confirm the pool has an active gauge on the vebal voting list
-            if not self.is_pool_on_vebal_list(pool_id):
-                del core_pools[pool_id]
-                continue
-            # make sure the pools have an alive preferential gauge
-            if not self.has_alive_preferential_gauge(pool_id):
-                del core_pools[pool_id]
-                continue
-            # exclude pools with yield fee exemption
-            elif self.is_pool_exempt_from_yield_fee(pool_id):
-                del core_pools[pool_id]
-
-        # add pools from whitelist
-        whitelist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_whitelist.json")
-        whitelist.raise_for_status()
-        whitelist = whitelist.json()
-        try:
-            for pool, symbol in whitelist[self.chain].items():
-                if pool not in core_pools:
-                    core_pools[pool] = symbol
-        except KeyError:
-            # no results for this chain
-            pass
-
-        # remove pools from blacklist
-        blacklist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_blacklist.json")
-        blacklist.raise_for_status()
-        blacklist = blacklist.json()
-        try:
-            for pool in blacklist[self.chain]:
-                if pool in core_pools:
-                    del core_pools[pool]
-        except KeyError:
-            # no results for this chain
-            pass
-
-        return CorePools(pools={PoolId(k): Symbol(v) for k, v in core_pools.items()})
-
-    def build_core_pools_apiv3(self) -> CorePools:
+    def build_core_pools(
+        self, return_all_chains=False, debug=False
+    ) -> CorePools | Dict:
         """
         build the core pools dictionary by taking pools from the vebal voting list and
         run the core pools filter function on them
+
+        return_all_chains: if True, return a dict with all core pools for all chains,
+        otherwise return the usual CorePools object for the current chain only
+        debug: if True, return the extended core pools dict with all attributes and
+        without whitelisting and blacklisting
         """
         candidates = [pool["id"] for pool in self.vebal_voting_list]
         core_pools_extended = self.filter_core_pool_candidates(candidates)
+
+        if debug:
+            return core_pools_extended
 
         core_pools = {
             "mainnet": {},
@@ -342,22 +300,27 @@ class BalPoolsGauges:
             "fraxtal": {},
         }
 
-        # summarise core pools into core_pools dict
+        # summarise extended core pools dict into core_pools dict
         for pool in core_pools_extended:
             if not pool["chain"].lower() in core_pools:
                 continue
             core_pools[pool["chain"].lower()][pool["id"]] = pool["symbol"]
 
-        # sort pools alphabetically by id
-        for chain in core_pools.copy():
+        # get whitelist and blacklist
+        whitelist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_whitelist.json")
+        whitelist.raise_for_status()
+        whitelist = whitelist.json()
+
+        blacklist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_blacklist.json")
+        blacklist.raise_for_status()
+        blacklist = blacklist.json()
+
+        chains = core_pools.keys() if return_all_chains else [self.chain]
+        for chain in chains:
+            # sort pools alphabetically by id
             core_pools[chain] = dict(sorted(core_pools[chain].items()))
 
-        # apply whitelist and blacklist
-        for chain in core_pools.copy():
             # add pools from whitelist
-            whitelist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_whitelist.json")
-            whitelist.raise_for_status()
-            whitelist = whitelist.json()
             try:
                 for pool, symbol in whitelist[chain].items():
                     if pool not in core_pools[chain]:
@@ -367,9 +330,6 @@ class BalPoolsGauges:
                 pass
 
             # remove pools from blacklist
-            blacklist = requests.get(f"{GITHUB_RAW_CONFIG}/core_pools_blacklist.json")
-            blacklist.raise_for_status()
-            blacklist = blacklist.json()
             try:
                 for pool in blacklist[chain]:
                     if pool in core_pools[chain]:
@@ -378,15 +338,12 @@ class BalPoolsGauges:
                 # no results for this chain
                 pass
 
-        return CorePools(pools={PoolId(k): Symbol(v) for k, v in core_pools.items()})
-
-        # dev: debug
-        with open("core_pools_extended.json", "w") as f:
-            json.dump(core_pools_extended, f, indent=2)
-            f.write("\n")
-        with open("core_pools.json", "w") as f:
-            json.dump(core_pools, f, indent=2)
-            f.write("\n")
+        if return_all_chains:
+            return core_pools
+        else:
+            return CorePools(
+                pools={PoolId(k): Symbol(v) for k, v in core_pools[self.chain].items()}
+            )
 
     def filter_core_pool_candidates(self, candidates: List[str]) -> List[str]:
         """
