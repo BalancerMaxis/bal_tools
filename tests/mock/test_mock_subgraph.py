@@ -24,16 +24,21 @@ def test_get_first_block_after_utc_timestamp(subgraph):
 
 @patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
 # TODO:
-@pytest.mark.skip("poolGetPool/tokenGetHistoricalPrices mock needs to updated based on new get_twap_price_pool implementation")
+@pytest.mark.skip(
+    "poolGetPool/tokenGetHistoricalPrices mock needs to updated based on new get_twap_price_pool implementation"
+)
 def test_get_twap_price_token(subgraph, date_range):
     addresses = ["0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"]
     chain = GqlChain.MAINNET
     result = subgraph.get_twap_price_token(addresses, chain, date_range)
     assert result.twap_price == Decimal(150)
-    
+
+
 @patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
 # TODO:
-@pytest.mark.skip("poolGetPool/tokenGetHistoricalPrices mock needs to updated based on new get_twap_price_pool implementation")
+@pytest.mark.skip(
+    "poolGetPool/tokenGetHistoricalPrices mock needs to updated based on new get_twap_price_pool implementation"
+)
 def test_get_twap_price_bpt(subgraph, date_range):
     pool_id = "0x5c6ee304399dbdb9c8ef030ab642b10820db8f56000200000000000000000014"
     chain = GqlChain.MAINNET
@@ -47,7 +52,9 @@ def test_fetch_all_pools_info(subgraph):
     assert isinstance(result[0], Pool)
     assert len(result) == 1
     pool = result[0]
-    assert pool.id == "0xca8ecd05a289b1fbc2e0eaec07360c4bfec07b6100020000000000000000051d"
+    assert (
+        pool.id == "0xca8ecd05a289b1fbc2e0eaec07360c4bfec07b6100020000000000000000051d"
+    )
     assert pool.address == "0xca8ecd05a289b1fbc2e0eaec07360c4bfec07b61"
     assert pool.chain == "ARBITRUM"
     assert pool.type == "GYRO"
