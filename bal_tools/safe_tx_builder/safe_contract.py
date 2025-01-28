@@ -17,7 +17,9 @@ class SafeContract:
     ):
         self.tx_builder = SafeTxBuilder()
         if not self.tx_builder._initialized:
-            raise RuntimeError("SafeTxBuilder must be initialized before using SafeContract")
+            raise RuntimeError(
+                "SafeTxBuilder must be initialized before using SafeContract"
+            )
         self.address = address
         self.abi = self._load_abi(abi, abi_file_path)
 
@@ -27,11 +29,14 @@ class SafeContract:
             n_found = len(funcs_found)
 
             if n_found == 1:
-                return lambda *args, **kwargs: self.call_function(funcs_found[0], args, kwargs)
+                return lambda *args, **kwargs: self.call_function(
+                    funcs_found[0], args, kwargs
+                )
             elif n_found > 1:
                 return lambda *args, **kwargs: self.call_function(
                     next(f for f in funcs_found if len(f.inputs) == len(args)),
-                    args, kwargs
+                    args,
+                    kwargs,
                 )
 
         raise AttributeError(f"No function named {attribute} in contract ABI")
