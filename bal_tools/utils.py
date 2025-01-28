@@ -41,3 +41,9 @@ def chain_ids_by_name():
     chains_raw = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/extras/chains.json"
     chains = requests.get(chains_raw).json()
     return chains["CHAIN_IDS_BY_NAME"]
+
+
+def chain_names_prod():
+    chains_raw = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/extras/chains.json"
+    chains = requests.get(chains_raw).json()
+    return chains["BALANCER_PRODUCTION_CHAINS"]
