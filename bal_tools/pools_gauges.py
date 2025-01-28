@@ -378,13 +378,13 @@ class BalPoolsGauges:
                 # no results for this chain
                 pass
 
-        # return core_pools, core_pools_extended
+        return CorePools(pools={PoolId(k): Symbol(v) for k, v in core_pools.items()})
 
-        with open("core_pools_apiv3.json", "w") as f:
+        # dev: debug
+        with open("core_pools_extended.json", "w") as f:
             json.dump(core_pools_extended, f, indent=2)
             f.write("\n")
-
-        with open("core_pools_old_style.json", "w") as f:
+        with open("core_pools.json", "w") as f:
             json.dump(core_pools, f, indent=2)
             f.write("\n")
 
