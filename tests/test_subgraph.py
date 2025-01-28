@@ -2,6 +2,7 @@ import pytest
 from decimal import Decimal
 import json
 import warnings
+import time
 
 from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot
 from bal_tools.errors import NoPricesFoundError
@@ -35,6 +36,11 @@ def test_invalid_chain():
 
 
 def test_get_twap_prices(subgraph, date_range, mainnet_core_pools):
+    current_time = int(time.time())
+    hundred_days = (100 * 24 * 60 * 60)
+    if current_time - hundred_days > date_range[0]:
+        pytest.skip("Skipping test due to stale timestamps (> 100 days old)")
+
     with open(
         f"tests/price_data/pool_prices-{date_range[0]}-{date_range[1]}.json", "r"
     ) as f:
