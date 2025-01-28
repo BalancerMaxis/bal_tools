@@ -1,3 +1,6 @@
+# monkey patches the .__json__() method so that it can serialise custom objects
+import json_fix
+
 from typing import Optional, List, Tuple, Dict, NewType
 from decimal import Decimal
 from dataclasses import dataclass
