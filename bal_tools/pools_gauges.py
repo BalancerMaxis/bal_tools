@@ -348,10 +348,12 @@ class BalPoolsGauges:
     def filter_core_pool_candidates(self, candidates: List[str]) -> List[str]:
         """
         filter a list of core pool candidates based on:
+        - swap fee being managed by the balancer dao
         - having a tvl of >$100k
         - being a boosted pool OR
         - having a non zero rate provider
         - not being in recovery mode
+        ref: https://forum.balancer.fi/t/bip-734-balancer-v3-launch-and-protocol-enhancements/6168#p-14954-revised-core-pool-framework-6
         """
         data = self.subgraph.fetch_graphql_data(
             "apiv3",
@@ -362,6 +364,21 @@ class BalPoolsGauges:
         for pool in data["poolGetPools"]:
             if pool["dynamicData"]["isInRecoveryMode"]:
                 # pools in recovery mode are not core pools
+                continue
+            if (
+                (pool["protocolVersion"] == 2)
+                and (
+                    pool["swapFeeManager"]
+                    != "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b"
+                )
+            ) or (
+                (pool["protocolVersion"] == 3)
+                and (
+                    pool["swapFeeManager"]
+                    != "0x0000000000000000000000000000000000000000"
+                )
+            ):
+                # balancer dao cannot manage swap fee; exclude pool
                 continue
             if "BOOSTED" in pool["tags"]:
                 # v3 boosted pools are always core pools

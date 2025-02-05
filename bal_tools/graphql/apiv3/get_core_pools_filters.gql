@@ -7,6 +7,8 @@ query CorePoolsFilters($where: GqlPoolFilter) {
     tags
     type
     version
+    protocolVersion
+    swapFeeManager
     dynamicData {
       totalLiquidity
       aggregateSwapFee
