@@ -351,6 +351,7 @@ class BalPoolsGauges:
         - having a tvl of >$100k
         - being a boosted pool OR
         - having a non zero rate provider
+        - not being in recovery mode
         """
         data = self.subgraph.fetch_graphql_data(
             "apiv3",
@@ -359,11 +360,13 @@ class BalPoolsGauges:
         )
         core_pools = []
         for pool in data["poolGetPools"]:
+            if pool["dynamicData"]["isInRecoveryMode"]:
+                # pools in recovery mode are not core pools
+                continue
             if "BOOSTED" in pool["tags"]:
                 # v3 boosted pools are always core pools
                 core_pools.append(pool)
                 continue
-
             for pool_token in pool["poolTokens"]:
                 if pool_token["isExemptFromProtocolYieldFee"] == True:
                     # pools that are yield fee exempt are not core pools

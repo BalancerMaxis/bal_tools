@@ -11,6 +11,7 @@ query CorePoolsFilters($where: GqlPoolFilter) {
       totalLiquidity
       aggregateSwapFee
       aggregateYieldFee
+      isInRecoveryMode
     }
     poolTokens {
       priceRateProviderData {
