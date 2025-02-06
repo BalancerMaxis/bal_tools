@@ -348,7 +348,7 @@ class BalPoolsGauges:
     def filter_core_pool_candidates(self, candidates: List[str]) -> List[str]:
         """
         filter a list of core pool candidates based on:
-        - swap fee being managed by the balancer dao
+        - protocol fee being managed by the balancer dao
         - having a tvl of >$100k
         - being a boosted pool OR
         - having a non zero rate provider
@@ -365,21 +365,17 @@ class BalPoolsGauges:
             if pool["dynamicData"]["isInRecoveryMode"]:
                 # pools in recovery mode are not core pools
                 continue
-            if (
-                (pool["protocolVersion"] == 2)
-                and (
-                    pool["swapFeeManager"]
-                    != "0xba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1ba1b"
-                )
-            ) or (
-                (pool["protocolVersion"] == 3)
-                and (
-                    pool["swapFeeManager"]
-                    != "0x0000000000000000000000000000000000000000"
-                )
-            ):
-                # balancer dao cannot manage swap fee; exclude pool
-                continue
+            if pool["poolCreator"] != ZERO_ADDRESS:
+                # balancer dao is not explicitly set as fees manager
+                if pool["type"] not in [
+                    "COMPOSABLE_STABLE",
+                    "META_STABLE",
+                    "STABLE",
+                    "WEIGHTED",
+                ]:
+                    # pool type is not native;
+                    # protocol fee management by balancer dao cannot be guaranteed
+                    continue
             if "BOOSTED" in pool["tags"]:
                 # v3 boosted pools are always core pools
                 core_pools.append(pool)
