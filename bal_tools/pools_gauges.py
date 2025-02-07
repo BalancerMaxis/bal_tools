@@ -348,9 +348,12 @@ class BalPoolsGauges:
     def filter_core_pool_candidates(self, candidates: List[str]) -> List[str]:
         """
         filter a list of core pool candidates based on:
+        - protocol fee being managed by the balancer dao
         - having a tvl of >$100k
         - being a boosted pool OR
         - having a non zero rate provider
+        - not being in recovery mode
+        ref: https://forum.balancer.fi/t/bip-734-balancer-v3-launch-and-protocol-enhancements/6168#p-14954-revised-core-pool-framework-6
         """
         data = self.subgraph.fetch_graphql_data(
             "apiv3",
@@ -359,11 +362,24 @@ class BalPoolsGauges:
         )
         core_pools = []
         for pool in data["poolGetPools"]:
+            if pool["dynamicData"]["isInRecoveryMode"]:
+                # pools in recovery mode are not core pools
+                continue
+            if pool["poolCreator"] != ZERO_ADDRESS:
+                # balancer dao is not explicitly set as fees manager
+                if pool["type"] not in [
+                    "COMPOSABLE_STABLE",
+                    "META_STABLE",
+                    "STABLE",
+                    "WEIGHTED",
+                ]:
+                    # pool type is not native;
+                    # protocol fee management by balancer dao cannot be guaranteed
+                    continue
             if "BOOSTED" in pool["tags"]:
                 # v3 boosted pools are always core pools
                 core_pools.append(pool)
                 continue
-
             for pool_token in pool["poolTokens"]:
                 if pool_token["isExemptFromProtocolYieldFee"] == True:
                     # pools that are yield fee exempt are not core pools

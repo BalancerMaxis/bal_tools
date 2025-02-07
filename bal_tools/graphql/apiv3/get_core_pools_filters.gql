@@ -7,10 +7,13 @@ query CorePoolsFilters($where: GqlPoolFilter) {
     tags
     type
     version
+    protocolVersion
+    poolCreator
     dynamicData {
       totalLiquidity
       aggregateSwapFee
       aggregateYieldFee
+      isInRecoveryMode
     }
     poolTokens {
       priceRateProviderData {
