@@ -30,6 +30,33 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "fraxtal": "https://graph.data.aura.finance/subgraphs/name/aura-finance-fraxtal",
     "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
 }
+# https://raw.githubusercontent.com/balancer/docs-v3/refs/heads/v3-outline/docs/data-and-analytics/data-and-analytics/subgraph.md
+VAULT_V3_SUBGRAPHS_BY_CHAIN = {
+    "arbitrum": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/Ad1cgTzScNmiDPSCeGYxgMU3YdRPrQXGkCZgpmPauauk",
+    "base": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/9b7UBHq8DXxrfGsYhAzF3jZn5mNRgZb5Ag18UL9GJ3cV",
+    "ethereum": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/4rixbLvpuBCwXTJSwyAzQgsLR8KprnyMfyCuXT8Fj5cd",
+    "gnosis": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/DDoABVc9xCRQwuXRq2QLZ6YLkjoFet74vnfncQDgJVo2",
+}
+VAULT_V3_SUBGRAPHS_BY_CHAIN_DEV = {
+    "arbitrum": "https://api.studio.thegraph.com/query/75376/balancer-v3-arbitrum/version/latest",
+    "base": "https://api.studio.thegraph.com/query/75376/balancer-v3-base/version/latest",
+    "mainnet": "https://api.studio.thegraph.com/query/75376/balancer-v3/version/latest",
+    "gnosis": "https://api.studio.thegraph.com/query/75376/balancer-v3-gnosis/version/latest",
+    "sepolia": "https://api.studio.thegraph.com/query/75376/balancer-v3-sepolia/version/latest",
+}
+POOLS_V3_SUBGRAPHS_BY_CHAIN = {
+    "arbitrum": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/EjSsjATNpZexLhozmDTe9kBHpZUt1GKjWdpZ2P9xmhsv",
+    "base": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/42QYdE4P8ZMKgPx4Mkw1Vnx3Zf6AEtWFVoeet1HZ4ntB",
+    "ethereum": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/C4tijcwi6nThKJYBmT5JaYK2As2kJGADs89AoQaCnYz7",
+    "gnosis": "https://gateway.thegraph.com/api/[api-key]/subgraphs/id/yeZGqiwNf3Lqpeo8XNHih83bk5Tbu4KvFwWVy3Dbus6",
+}
+POOLS_V3_SUBGRAPHS_BY_CHAIN_DEV = {
+    "arbitrum": "https://api.studio.thegraph.com/query/75376/balancer-pools-v3-arbitrum/version/latest",
+    "base": "https://api.studio.thegraph.com/query/75376/balancer-pools-v3-base/version/latest",
+    "mainnet": "https://api.studio.thegraph.com/query/75376/balancer-pools-v3/version/latest",
+    "gnosis": "https://api.studio.thegraph.com/query/75376/balancer-pools-v3-gnosis/version/latest",
+    "sepolia": "https://api.studio.thegraph.com/query/75376/balancer-pools-v3-sepolia/version/latest",
+}
 
 
 class Subgraph:
@@ -65,16 +92,40 @@ class Subgraph:
         """
         if subgraph == "apiv3":
             return "https://api-v3.balancer.fi"
-
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
-
+        if subgraph == "vault-v3":
+            return self.get_subgraph_url_vault_v3(self.chain)
+        if subgraph == "pools-v3":
+            return self.get_subgraph_url_pools_v3(self.chain)
         return (
             self.get_subgraph_url_frontendv2(subgraph)
             or self.get_subgraph_url_legacy(subgraph)
             or self.get_subgraph_url_sdk(subgraph)
             or None
         )
+
+    def get_subgraph_url_vault_v3(self, chain: str) -> str:
+        graph_api_key = os.getenv("GRAPH_API_KEY")
+        if graph_api_key:
+            try:
+                return VAULT_V3_SUBGRAPHS_BY_CHAIN.get(chain, None).replace(
+                    "[api-key]", graph_api_key
+                )
+            except AttributeError:
+                pass
+        return VAULT_V3_SUBGRAPHS_BY_CHAIN_DEV.get(chain, None)
+
+    def get_subgraph_url_pools_v3(self, chain: str) -> str:
+        graph_api_key = os.getenv("GRAPH_API_KEY")
+        if graph_api_key:
+            try:
+                return POOLS_V3_SUBGRAPHS_BY_CHAIN.get(chain, None).replace(
+                    "[api-key]", graph_api_key
+                )
+            except AttributeError:
+                pass
+        return POOLS_V3_SUBGRAPHS_BY_CHAIN_DEV.get(chain, None)
 
     def get_subgraph_url_frontendv2(self, subgraph):
         if subgraph == "core":
