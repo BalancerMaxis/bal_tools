@@ -7,6 +7,7 @@ from decimal import Decimal
 from typing import Union, List, Callable, Dict
 import warnings
 
+import pandas as pd
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from web3 import Web3
@@ -17,7 +18,28 @@ from .models import *
 from .errors import NoPricesFoundError
 
 
+def url_dict_from_df(df):
+    return (
+        dict(
+            zip(
+                df["Network"].str.lower().replace("ethereum", "mainnet"),
+                df["Production URL"],
+            )
+        ),
+        dict(
+            zip(
+                df["Network"].str.lower().replace("ethereum", "mainnet"),
+                df["Development URL (rate-limited)"],
+            )
+        ),
+    )
+
+
 graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
+vault_df, pools_df = pd.read_html(
+    "https://github.com/balancer/docs-v3/blob/v3-outline/docs/data-and-analytics/data-and-analytics/subgraph.md",
+    match="Network",
+)
 
 AURA_SUBGRAPHS_BY_CHAIN = {
     "mainnet": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-mainnet/api",
@@ -30,6 +52,12 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "fraxtal": "https://graph.data.aura.finance/subgraphs/name/aura-finance-fraxtal",
     "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
 }
+VAULT_V3_SUBGRAPHS_BY_CHAIN, VAULT_V3_SUBGRAPHS_BY_CHAIN_DEV = url_dict_from_df(
+    vault_df
+)
+POOLS_V3_SUBGRAPHS_BY_CHAIN, POOLS_V3_SUBGRAPHS_BY_CHAIN_DEV = url_dict_from_df(
+    pools_df
+)
 
 
 class Subgraph:
@@ -65,16 +93,40 @@ class Subgraph:
         """
         if subgraph == "apiv3":
             return "https://api-v3.balancer.fi"
-
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
-
+        if subgraph == "vault-v3":
+            return self.get_subgraph_url_vault_v3(self.chain)
+        if subgraph == "pools-v3":
+            return self.get_subgraph_url_pools_v3(self.chain)
         return (
             self.get_subgraph_url_frontendv2(subgraph)
             or self.get_subgraph_url_legacy(subgraph)
             or self.get_subgraph_url_sdk(subgraph)
             or None
         )
+
+    def get_subgraph_url_vault_v3(self, chain: str) -> str:
+        graph_api_key = os.getenv("GRAPH_API_KEY")
+        if graph_api_key:
+            try:
+                return VAULT_V3_SUBGRAPHS_BY_CHAIN.get(chain, None).replace(
+                    "[api-key]", graph_api_key
+                )
+            except AttributeError:
+                pass
+        return VAULT_V3_SUBGRAPHS_BY_CHAIN_DEV.get(chain, None)
+
+    def get_subgraph_url_pools_v3(self, chain: str) -> str:
+        graph_api_key = os.getenv("GRAPH_API_KEY")
+        if graph_api_key:
+            try:
+                return POOLS_V3_SUBGRAPHS_BY_CHAIN.get(chain, None).replace(
+                    "[api-key]", graph_api_key
+                )
+            except AttributeError:
+                pass
+        return POOLS_V3_SUBGRAPHS_BY_CHAIN_DEV.get(chain, None)
 
     def get_subgraph_url_frontendv2(self, subgraph):
         if subgraph == "core":
