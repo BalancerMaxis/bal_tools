@@ -29,6 +29,7 @@ setup(
         "gql[requests]",
         "requests",
         "pydantic==2.10.5",
+        "lxml"
     ],
     keywords=["python", "first package"],
     classifiers=[

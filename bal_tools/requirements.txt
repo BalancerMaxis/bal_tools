@@ -8,3 +8,4 @@ gql[requests]
 python-dotenv
 pydantic==2.10.6
 json-fix
+lxml
