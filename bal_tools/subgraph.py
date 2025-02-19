@@ -86,7 +86,7 @@ class Subgraph:
         3. frontend v2 config file (legacy style; for chains not supported by decentralised the graph)
 
         params:
-        - subgraph: "apiv3", "core", "gauges", "blocks" or "aura"
+        - subgraph: "apiv3", "vault-v3", "pools-v3", "core", "gauges", "blocks" or "aura"
 
         returns:
         - https url of the subgraph
