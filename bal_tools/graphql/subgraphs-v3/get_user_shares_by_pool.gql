@@ -1,0 +1,8 @@
+query UserSharesByPool($pool: String!, $block: Block_height) {
+  poolShares(where: { balance_gt: 0, pool: $pool }, block: { number: $block }) {
+    user {
+      id
+    }
+    balance
+  }
+}
