@@ -86,14 +86,32 @@ def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_b
 
 
 @pytest.mark.parametrize("have_thegraph_key", [True, False])
-@pytest.mark.parametrize("subgraph_type", ["core", "gauges", "blocks", "aura"])
+@pytest.mark.parametrize(
+    "subgraph_type",
+    [
+        "core",
+        "gauges",
+        "blocks",
+        "aura",
+        "apiv3",
+        "vault-v3",
+        "pools-v3",
+    ],
+)
 def test_find_all_subgraph_urls(
-    subgraph_all_chains, have_thegraph_key, subgraph_type, monkeypatch
+    subgraph_all_chains, have_thegraph_key, subgraph_type, monkeypatch, chains_prod_v3
 ):
     if subgraph_all_chains.chain in ["sepolia", "mode"] and subgraph_type in [
         "aura",
         "blocks",
     ]:
+        pytest.skip(
+            f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
+        )
+    if subgraph_type in [
+        "vault-v3",
+        "pools-v3",
+    ] and subgraph_all_chains.chain not in chains_prod_v3 + ["sepolia"]:
         pytest.skip(
             f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
         )
