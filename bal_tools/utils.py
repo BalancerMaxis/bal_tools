@@ -6,6 +6,11 @@ from importlib.resources import files
 import requests
 
 
+CHAINS = requests.get(
+    "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/refs/heads/main/extras/chains.json"
+).json()
+
+
 ### These functions are to deal with differing web3 versions and the need to use 5.x for legacy brownie code
 def to_checksum_address(address: str):
     if hasattr(Web3, "toChecksumAddress"):
@@ -38,12 +43,12 @@ def flatten_nested_dict(d):
 
 
 def chain_ids_by_name():
-    chains_raw = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/extras/chains.json"
-    chains = requests.get(chains_raw).json()
-    return chains["CHAIN_IDS_BY_NAME"]
+    return CHAINS["CHAIN_IDS_BY_NAME"]
 
 
 def chain_names_prod():
-    chains_raw = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/extras/chains.json"
-    chains = requests.get(chains_raw).json()
-    return chains["BALANCER_PRODUCTION_CHAINS"]
+    return CHAINS["BALANCER_PRODUCTION_CHAINS"]
+
+
+def chain_names_prod_v3():
+    return CHAINS["BALANCER_PRODUCTION_CHAINS_V3"]
