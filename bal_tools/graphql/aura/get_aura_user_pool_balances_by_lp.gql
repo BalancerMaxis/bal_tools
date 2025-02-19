@@ -1,4 +1,4 @@
-query AuraUserPoolBalancesByLp($lpToken: String!, $block: Block_height) {
+query AuraUserPoolBalancesByLp($lpToken: String!, $block: Int) {
   pools(where: { lpToken: $lpToken }, block: { number: block }) {
     accounts(where: { staked_gt: 0 }) {
       account {
