@@ -466,9 +466,6 @@ class Subgraph:
     def get_v3_protocol_fees(self, pool_id: str, chain: GqlChain, date_range: DateRange) -> Decimal:
         fee_snapshots = self.fetch_graphql_data("vault-v3", "get_protocol_fees", {"id": pool_id, "ts_gt": date_range[0], "ts_lt": date_range[1]})["poolSnapshots"]
         token_prices = self.get_twap_price_pool(pool_id, chain, date_range).token_prices
-        
-        if len(fee_snapshots[0]["totalProtocolSwapFees"]) != len(token_prices):
-            raise ValueError("Fee snapshots and token prices have different lengths")
 
         total_fees = Decimal(0)
         for snapshot in fee_snapshots:
