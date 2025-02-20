@@ -142,3 +142,10 @@ def test_warning_configuration(monkeypatch):
         warnings.simplefilter("error")
         subgraph = Subgraph(silence_warnings=True)
         subgraph.get_subgraph_url("core")
+
+
+def test_get_swap_fees(subgraph):
+    v3_pools = ["0x85b2b559bc2d21104c4defdd6efca8a20343361d", "0xc4ce391d82d164c166df9c8336ddf84206b2f812", "0x64b84023cfe8397df83c67eaccc2c03ecda4aee5"]
+    for pool in v3_pools:
+        total_fees = subgraph.get_v3_protocol_fees(pool, GqlChain.MAINNET, (1739244628, 1740080000))
+        assert total_fees > Decimal(0)
