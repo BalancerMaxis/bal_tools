@@ -477,7 +477,10 @@ class Subgraph:
                 "orderBy": "timestamp",
                 "orderDirection": "desc",
             },
-        )["poolSnapshots"][0]
+        )["poolSnapshots"]
+        if not fee_snapshot:
+            return Decimal(0)
+
         token_addresses = [token["address"] for token in fee_snapshot["pool"]["tokens"]]
 
         token_prices = self.get_twap_price_token(
