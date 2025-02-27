@@ -481,7 +481,7 @@ class Subgraph:
 
         if not fee_snapshot:
             return Decimal(0)
-     
+
         fee_snapshot = fee_snapshot[0]
 
         token_addresses = [token["address"] for token in fee_snapshot["pool"]["tokens"]]
