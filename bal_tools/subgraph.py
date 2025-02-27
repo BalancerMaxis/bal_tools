@@ -492,9 +492,6 @@ class Subgraph:
             fee_snapshot["totalProtocolYieldFees"],
             token_prices,
         ):
-            print(
-                f"swap_fee: {swap_fee}, yield_fee: {yield_fee}, twap_token: {twap_token.twap_price}"
-            )
             total_fees += (
                 Decimal(swap_fee) + Decimal(yield_fee)
             ) * twap_token.twap_price
