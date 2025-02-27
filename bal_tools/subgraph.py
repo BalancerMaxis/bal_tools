@@ -463,10 +463,23 @@ class Subgraph:
                 break
         return all_pools
 
-    def get_v3_protocol_fees(self, pool_id: str, chain: GqlChain, date_range: DateRange) -> Decimal:
-        fee_snapshot = self.fetch_graphql_data("vault-v3", "get_protocol_fees", {"id": pool_id, "ts_gt": date_range[0], "ts_lt": date_range[1], "first": 1, "orderBy": "timestamp", "orderDirection": "desc"})["poolSnapshots"][0]
+    def get_v3_protocol_fees(
+        self, pool_id: str, chain: GqlChain, date_range: DateRange
+    ) -> Decimal:
+        fee_snapshot = self.fetch_graphql_data(
+            "vault-v3",
+            "get_protocol_fees",
+            {
+                "id": pool_id,
+                "ts_gt": date_range[0],
+                "ts_lt": date_range[1],
+                "first": 1,
+                "orderBy": "timestamp",
+                "orderDirection": "desc",
+            },
+        )["poolSnapshots"][0]
         token_addresses = [token["address"] for token in fee_snapshot["pool"]["tokens"]]
-        
+
         token_prices = self.get_twap_price_token(
             addresses=token_addresses,
             chain=chain,
@@ -474,8 +487,16 @@ class Subgraph:
         )
 
         total_fees = Decimal(0)
-        for swap_fee, yield_fee, twap_token in zip(fee_snapshot["totalProtocolSwapFees"], fee_snapshot["totalProtocolYieldFees"], token_prices):
-            print(f"swap_fee: {swap_fee}, yield_fee: {yield_fee}, twap_token: {twap_token.twap_price}")
-            total_fees += (Decimal(swap_fee) + Decimal(yield_fee)) * twap_token.twap_price
+        for swap_fee, yield_fee, twap_token in zip(
+            fee_snapshot["totalProtocolSwapFees"],
+            fee_snapshot["totalProtocolYieldFees"],
+            token_prices,
+        ):
+            print(
+                f"swap_fee: {swap_fee}, yield_fee: {yield_fee}, twap_token: {twap_token.twap_price}"
+            )
+            total_fees += (
+                Decimal(swap_fee) + Decimal(yield_fee)
+            ) * twap_token.twap_price
 
-        return total_fees 
+        return total_fees
