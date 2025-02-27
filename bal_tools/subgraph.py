@@ -463,32 +463,19 @@ class Subgraph:
                 break
         return all_pools
 
-    def get_v3_protocol_fees(
-        self, pool_id: str, chain: GqlChain, date_range: DateRange
-    ) -> Decimal:
-        fee_snapshots = self.fetch_graphql_data(
-            "vault-v3",
-            "get_protocol_fees",
-            {"id": pool_id, "ts_gt": date_range[0], "ts_lt": date_range[1]},
-        )["poolSnapshots"]
-        token_prices = self.get_twap_price_pool(pool_id, chain, date_range).token_prices
+    def get_v3_protocol_fees(self, pool_id: str, chain: GqlChain, date_range: DateRange) -> Decimal:
+        fee_snapshot = self.fetch_graphql_data("vault-v3", "get_protocol_fees", {"id": pool_id, "ts_gt": date_range[0], "ts_lt": date_range[1], "first": 1, "orderBy": "timestamp", "orderDirection": "desc"})["poolSnapshots"][0]
+        token_addresses = [token["address"] for token in fee_snapshot["pool"]["tokens"]]
+        
+        token_prices = self.get_twap_price_token(
+            addresses=token_addresses,
+            chain=chain,
+            date_range=date_range,
+        )
 
         total_fees = Decimal(0)
-        for snapshot in fee_snapshots:
-            for swap_fee, token in zip(
-                snapshot["totalProtocolSwapFees"], snapshot["pool"]["tokens"]
-            ):
-                twap_token = next(
-                    (t for t in token_prices if t.address == token["address"]), None
-                )
-                total_fees += Decimal(swap_fee) * twap_token.twap_price
+        for swap_fee, yield_fee, twap_token in zip(fee_snapshot["totalProtocolSwapFees"], fee_snapshot["totalProtocolYieldFees"], token_prices):
+            print(f"swap_fee: {swap_fee}, yield_fee: {yield_fee}, twap_token: {twap_token.twap_price}")
+            total_fees += (Decimal(swap_fee) + Decimal(yield_fee)) * twap_token.twap_price
 
-            for yield_fee, token in zip(
-                snapshot["totalProtocolYieldFees"], snapshot["pool"]["tokens"]
-            ):
-                twap_token = next(
-                    (t for t in token_prices if t.address == token["address"]), None
-                )
-                total_fees += Decimal(yield_fee) * twap_token.twap_price
-
-        return total_fees
+        return total_fees 
