@@ -477,7 +477,8 @@ class Subgraph:
                 "orderBy": "timestamp",
                 "orderDirection": "desc",
             },
-        )["poolSnapshots"]
+        ).get("poolSnapshots")
+
         if not fee_snapshot:
             return Decimal(0)
 
