@@ -1,0 +1,19 @@
+query GetV3Fees($poolId: ID!) {
+  pool(id: $poolId) {
+    tokens {
+      symbol
+      address
+      totalProtocolSwapFee
+      totalProtocolYieldFee
+      vaultProtocolSwapFeeBalance
+      vaultProtocolYieldFeeBalance
+      controllerProtocolFeeBalance
+    }
+    snapshots(first: 1, orderBy: timestamp, orderDirection: desc) {
+      timestamp
+      balances
+      totalProtocolSwapFees
+      totalProtocolYieldFees
+    }
+  }
+}
