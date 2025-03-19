@@ -92,6 +92,8 @@ class Subgraph:
         - https url of the subgraph
         """
         if subgraph == "apiv3":
+            if self.chain == "sepolia":
+                return "https://test-api-v3.balancer.fi"
             return "https://api-v3.balancer.fi"
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
