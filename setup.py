@@ -26,6 +26,7 @@ setup(
         "setuptools>=42",
         "wheel",
         "pathlib>=1.0",
+        "numpy==1.26.4",
         "pandas==1.5.3",
         "dotmap",
         "munch==4.0.0",
