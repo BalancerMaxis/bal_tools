@@ -25,7 +25,7 @@ setup(
         "eth-brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x"
         "setuptools>=42",
         "wheel",
-        "pathlib>=1.0"
+        "pathlib>=1.0",
         "pandas",
         "dotmap",
         "munch==4.0.0",
