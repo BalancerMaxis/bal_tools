@@ -22,20 +22,17 @@ setup(
     },
     url="https://github.com/BalancerMaxis/bal_tools",
     install_requires=[
+        "brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x"
         "setuptools>=42",
         "wheel",
         "pathlib>=1.0"
-        "requests==2.31.0",
         "pandas",
-        "web3==6.15.1",
         "dotmap",
         "munch==4.0.0",
         "gql[requests]",
-        "python-dotenv==0.16.0",
-        "pydantic==2.10.6",
+        "pydantic",
         "json-fix",
         "lxml",
-        "eth-abi==5.0.1",
     ],
     keywords=["python", "first package"],
     classifiers=[
