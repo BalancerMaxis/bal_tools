@@ -23,10 +23,9 @@ setup(
     url="https://github.com/BalancerMaxis/bal_tools",
     install_requires=[
         "eth-brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x",
-        "setuptools>=42",
-        "wheel",
         "pathlib>=1.0",
-        "pandas",
+        "numpy==1.26.4",
+        "pandas==1.5.3",
         "dotmap",
         "munch==4.0.0",
         "gql[requests]",
