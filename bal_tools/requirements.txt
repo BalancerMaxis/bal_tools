@@ -1,4 +1,4 @@
-git+https://github.com/BalancerMaxis/brownie.git@v1.20.x
+git+https://github.com/BalancerMaxis/brownie.git@v1.20.x#egg=eth-brownie
 pathlib>=1.0
 pandas
 dotmap
