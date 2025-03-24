@@ -25,7 +25,7 @@ setup(
         "setuptools>=42",
         "wheel",
         "munch==4.0.0",
-        "web3",
+        "web3==6.15.1",
         "gql[requests]",
         "requests",
         "pydantic==2.10.5",
