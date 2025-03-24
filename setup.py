@@ -26,7 +26,7 @@ setup(
         "setuptools>=42",
         "wheel",
         "pathlib>=1.0",
-        "pandas",
+        "pandas==1.5.3",
         "dotmap",
         "munch==4.0.0",
         "gql[requests]",
