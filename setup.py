@@ -25,7 +25,7 @@ setup(
         "eth-brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x",
         "pathlib>=1.0",
         "numpy==1.26.4",
-        "pandas==1.5.3",
+        "pandas",
         "dotmap",
         "munch==4.0.0",
         "gql[requests]",
