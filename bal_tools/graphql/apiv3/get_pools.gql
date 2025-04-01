@@ -3,6 +3,7 @@ query AllPools($chain: GqlChain!) {
     address
     symbol
     tags
+    protocolVersion
     dynamicData {
       swapEnabled
     }
