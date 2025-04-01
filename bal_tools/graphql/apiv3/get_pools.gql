@@ -2,6 +2,7 @@ query AllPools($chain: GqlChain!) {
   poolGetPools(where: { chainIn: [$chain] }) {
     address
     symbol
+    tags
     dynamicData {
       swapEnabled
     }
