@@ -74,6 +74,8 @@ def test_fetch_all_pools_info(subgraph):
 
 
 def test_get_balancer_pool_snapshots(chain, subgraph_all_chains, pool_snapshot_blocks):
+    if chain == "zkevm":
+        pytest.skip("Subgraph for zkevm is in pruned state; skipping test")
     if chain in pool_snapshot_blocks.keys():
         block = pool_snapshot_blocks[chain]
         res = subgraph_all_chains.get_balancer_pool_snapshots(
