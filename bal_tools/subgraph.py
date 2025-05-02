@@ -39,6 +39,7 @@ graphql_base_path = f"{os.path.dirname(os.path.abspath(__file__))}/graphql"
 vault_df, pools_df = pd.read_html(
     "https://github.com/balancer/docs-v3/blob/v3-outline/docs/data-and-analytics/data-and-analytics/subgraph.md",
     match="Network",
+    flavor="lxml",
 )
 
 AURA_SUBGRAPHS_BY_CHAIN = {
