@@ -23,13 +23,15 @@ def url_dict_from_df(df):
         dict(
             zip(
                 df["Network"].str.lower().replace("ethereum", "mainnet"),
-                df["Production URL"],
+                df["Production URL"].str.replace("open in new window", ""),
             )
         ),
         dict(
             zip(
                 df["Network"].str.lower().replace("ethereum", "mainnet"),
-                df["Development URL (rate-limited)"],
+                df["Development URL (rate-limited)"].str.replace(
+                    "open in new window", ""
+                ),
             )
         ),
     )
