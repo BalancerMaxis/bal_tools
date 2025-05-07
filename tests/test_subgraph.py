@@ -158,6 +158,15 @@ def test_get_swap_fees(subgraph):
         )
         assert total_fees > Decimal(0)
 
+
 def test_get_pool_protocol_version(subgraph):
-    assert subgraph.get_pool_protocol_version("0x85b2b559bc2d21104c4defdd6efca8a20343361d") == 3
-    assert subgraph.get_pool_protocol_version("0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112") == 2
+    assert (
+        subgraph.get_pool_protocol_version("0x85b2b559bc2d21104c4defdd6efca8a20343361d")
+        == 3
+    )
+    assert (
+        subgraph.get_pool_protocol_version(
+            "0x1e19cf2d73a72ef1332c882f20534b6519be0276000200000000000000000112"
+        )
+        == 2
+    )

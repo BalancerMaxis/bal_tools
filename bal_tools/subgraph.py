@@ -508,12 +508,14 @@ class Subgraph:
             ) * twap_token.twap_price
 
         return total_fees
-    
+
     def get_pool_protocol_version(self, pool_id: str) -> int:
         """
         returns the protocol version for given pool; either 1, 2 or 3
         """
-        chain = self.chain.value if isinstance(self.chain, GqlChain) else self.chain.upper()
+        chain = (
+            self.chain.value if isinstance(self.chain, GqlChain) else self.chain.upper()
+        )
         params = {
             "chain": chain,
             "id": pool_id,
