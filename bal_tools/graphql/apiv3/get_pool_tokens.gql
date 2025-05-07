@@ -2,6 +2,7 @@ query GetPoolDetails($chain: GqlChain!, $id: String!, $userAddress: String) {
   poolGetPool(chain: $chain, id: $id, userAddress: $userAddress) {
     id
     chain
+    protocolVersion
     dynamicData {
       totalShares
       totalLiquidity
