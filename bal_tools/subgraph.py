@@ -471,6 +471,10 @@ class Subgraph:
     def get_v3_protocol_fees(
         self, pool_id: str, chain: GqlChain, date_range: DateRange
     ) -> Decimal:
+        """
+        Fetches the protocol fees for a given v3 pool over `date range`
+        NOTE: assumes `date range` is within a 2 week period
+        """
         fee_snapshot = self.fetch_graphql_data(
             "vault-v3",
             "get_protocol_fees",
@@ -478,7 +482,7 @@ class Subgraph:
                 "id": pool_id,
                 "ts_gt": date_range[0],
                 "ts_lt": date_range[1],
-                "first": 1,
+                "first": 14,
                 "orderBy": "timestamp",
                 "orderDirection": "desc",
             },
@@ -487,9 +491,10 @@ class Subgraph:
         if not fee_snapshot:
             return Decimal(0)
 
-        fee_snapshot = fee_snapshot[0]
+        # descending so first/last snaps are end/start of time window
+        end_fee_snapshot, start_fee_snapshot = fee_snapshot[0], fee_snapshot[-1]
 
-        token_addresses = [token["address"] for token in fee_snapshot["pool"]["tokens"]]
+        token_addresses = [token["address"] for token in end_fee_snapshot["pool"]["tokens"]]
 
         token_prices = self.get_twap_price_token(
             addresses=token_addresses,
@@ -498,16 +503,19 @@ class Subgraph:
         )
 
         total_fees = Decimal(0)
-        for swap_fee, yield_fee, twap_token in zip(
-            fee_snapshot["totalProtocolSwapFees"],
-            fee_snapshot["totalProtocolYieldFees"],
+        for end_swap_fee, end_yield_fee, start_swap_fee, start_yield_fee, twap_token in zip(
+            end_fee_snapshot["totalProtocolSwapFees"],
+            end_fee_snapshot["totalProtocolYieldFees"],
+            start_fee_snapshot["totalProtocolSwapFees"],
+            start_fee_snapshot["totalProtocolYieldFees"],
             token_prices,
         ):
-            total_fees += (
-                Decimal(swap_fee) + Decimal(yield_fee)
-            ) * twap_token.twap_price
+            swap_fee_diff = Decimal(end_swap_fee) - Decimal(start_swap_fee)
+            yield_fee_diff = Decimal(end_yield_fee) - Decimal(start_yield_fee)
+            total_fees += (swap_fee_diff + yield_fee_diff) * twap_token.twap_price
 
         return total_fees
+
 
     def get_pool_protocol_version(self, pool_id: str) -> int:
         """
