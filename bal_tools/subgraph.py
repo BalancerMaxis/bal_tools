@@ -494,7 +494,9 @@ class Subgraph:
         # descending so first/last snaps are end/start of time window
         end_fee_snapshot, start_fee_snapshot = fee_snapshot[0], fee_snapshot[-1]
 
-        token_addresses = [token["address"] for token in end_fee_snapshot["pool"]["tokens"]]
+        token_addresses = [
+            token["address"] for token in end_fee_snapshot["pool"]["tokens"]
+        ]
 
         token_prices = self.get_twap_price_token(
             addresses=token_addresses,
@@ -503,7 +505,13 @@ class Subgraph:
         )
 
         total_fees = Decimal(0)
-        for end_swap_fee, end_yield_fee, start_swap_fee, start_yield_fee, twap_token in zip(
+        for (
+            end_swap_fee,
+            end_yield_fee,
+            start_swap_fee,
+            start_yield_fee,
+            twap_token,
+        ) in zip(
             end_fee_snapshot["totalProtocolSwapFees"],
             end_fee_snapshot["totalProtocolYieldFees"],
             start_fee_snapshot["totalProtocolSwapFees"],
@@ -515,7 +523,6 @@ class Subgraph:
             total_fees += (swap_fee_diff + yield_fee_diff) * twap_token.twap_price
 
         return total_fees
-
 
     def get_pool_protocol_version(self, pool_id: str) -> int:
         """
