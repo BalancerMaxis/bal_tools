@@ -298,6 +298,7 @@ class BalPoolsGauges:
             "base": {},
             "mode": {},
             "fraxtal": {},
+            "optimism": {},
         }
 
         # summarise extended core pools dict into core_pools dict
