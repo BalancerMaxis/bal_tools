@@ -12,10 +12,10 @@ from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from web3 import Web3
 
-from typing import Union, List, Callable, Dict
 from .utils import get_abi, flatten_nested_dict, chain_ids_by_name
 from .models import *
 from .errors import NoPricesFoundError
+from .ts_config_loader import ts_config_loader
 
 
 def url_dict_from_df(df):
@@ -94,6 +94,10 @@ class Subgraph:
         returns:
         - https url of the subgraph
         """
+        # before anything else, try to get the url from the latest backend config
+        url = self.get_subgraph_url_from_backend_config(subgraph)
+        if url:
+            return url
         if subgraph == "apiv3":
             if self.chain == "sepolia":
                 return "https://test-api-v3.balancer.fi"
@@ -110,6 +114,39 @@ class Subgraph:
             or self.get_subgraph_url_sdk(subgraph)
             or None
         )
+
+    def get_subgraph_url_from_backend_config(self, subgraph: str) -> str:
+        ts_keys_map = {
+            "vault-v3": "balancerV3",
+            "pools-v3": "balancerPoolsV3",
+            "core": "balancer",
+            "gauges": "gauge",
+            "aura": "aura",
+        }
+        config_path = f"https://raw.githubusercontent.com/balancer/backend/refs/heads/v3-main/config/{self.chain}.ts"
+        try:
+            config = ts_config_loader(config_path)
+            if subgraph not in ts_keys_map:
+                return None
+            url = config["subgraphs"][ts_keys_map[subgraph]]
+            if "${env.THEGRAPH_API_KEY_BALANCER}" in url:
+                graph_api_key = os.getenv("GRAPH_API_KEY")
+                if graph_api_key:
+                    try:
+                        return url.replace(
+                            "${env.THEGRAPH_API_KEY_BALANCER}",
+                            os.getenv("GRAPH_API_KEY"),
+                        )
+                    except:
+                        return None
+                else:
+                    warnings.warn(
+                        f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
+                        UserWarning,
+                    )
+        except:
+            return None
+        return None
 
     def get_subgraph_url_vault_v3(self, chain: str) -> str:
         graph_api_key = os.getenv("GRAPH_API_KEY")
