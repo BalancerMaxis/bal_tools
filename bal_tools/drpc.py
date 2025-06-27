@@ -1,9 +1,22 @@
+from requests import Session
+from requests.adapters import HTTPAdapter, Retry
 from web3 import Web3
 
 DRPC_NAME_OVERRIDES = {
     "mainnet": "ethereum",
     "zkevm": "polygon-zkevm",
 }
+ADAPTER = HTTPAdapter(
+    pool_connections=20,
+    pool_maxsize=20,
+    max_retries=Retry(
+        total=10,
+        backoff_factor=0.5,
+        status_forcelist=[429, 500, 502, 503, 504, 520],
+    ),
+)
+DRPC_SESSION = Session()
+DRPC_SESSION.mount("https://", ADAPTER)
 
 
 class Web3RpcByChain:
@@ -45,14 +58,18 @@ class Web3RpcByChain:
 class Web3Rpc:
     def __init__(self, chain, DRPC_KEY):
         drpc_chain = DRPC_NAME_OVERRIDES.get(chain, chain)
-        self.w3 = Web3(
-            Web3.HTTPProvider(
-                f"https://lb.drpc.org/ogrpc?network={drpc_chain}&dkey={DRPC_KEY}"
+        endpoint_uri = f"https://lb.drpc.org/ogrpc?network={drpc_chain}&dkey={DRPC_KEY}"
+        try:
+            self.w3 = Web3(
+                Web3.HTTPProvider(endpoint_uri=endpoint_uri, session=DRPC_SESSION)
             )
-        )
+        except Exception as e:
+            raise ConnectionError(
+                f"Error connecting to {drpc_chain} on DRPC (url: {endpoint_uri}): {e}"
+            )
         if not self.w3.is_connected():
             raise ConnectionError(
-                f"Unable to connect to {drpc_chain} network with provided DRPC_KEY."
+                f"Not connected to {drpc_chain} on DRPC (url: {endpoint_uri})"
             )
         try:
             self.w3.eth.block_number
