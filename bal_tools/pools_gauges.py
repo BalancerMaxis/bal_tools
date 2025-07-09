@@ -16,8 +16,12 @@ from bal_tools.models import (
     Symbol,
 )
 
-GITHUB_RAW_OUTPUTS = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/refs/heads/optimism-integration/outputs"
-GITHUB_RAW_CONFIG = "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/refs/heads/optimism-integration/config"
+GITHUB_RAW_OUTPUTS = (
+    "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/outputs"
+)
+GITHUB_RAW_CONFIG = (
+    "https://raw.githubusercontent.com/BalancerMaxis/bal_addresses/main/config"
+)
 
 
 class BalPoolsGauges:
