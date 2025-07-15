@@ -16,6 +16,7 @@ from .utils import get_abi, flatten_nested_dict, chain_ids_by_name
 from .models import *
 from .errors import NoPricesFoundError
 from .ts_config_loader import ts_config_loader
+from .etherscan import Etherscan
 
 
 def url_dict_from_df(df):
@@ -72,6 +73,7 @@ class Subgraph:
         if silence_warnings:
             self.set_silence_warnings(True)
         self.custom_price_logic: Dict[str, Callable] = {}
+        self.etherscan_client = None
 
     def set_silence_warnings(self, silence_warnings: bool):
         if silence_warnings:
@@ -325,20 +327,45 @@ class Subgraph:
 
         return result
 
-    def get_first_block_after_utc_timestamp(self, timestamp: int) -> int:
+    def get_first_block_after_utc_timestamp(
+        self, timestamp: int, use_etherscan: bool = True
+    ) -> int:
         if timestamp > int(datetime.now().strftime("%s")):
             timestamp = int(datetime.now().strftime("%s")) - 2000
 
-        data = self.fetch_graphql_data(
-            "blocks",
-            "first_block_after_ts",
-            {
-                "timestamp_gt": int(timestamp) - 200,
-                "timestamp_lt": int(timestamp) + 200,
-            },
-        )
-        data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
-        return int(data["blocks"][0]["number"])
+        if use_etherscan:
+            try:
+                if not self.etherscan_client:
+                    self.etherscan_client = Etherscan()
+
+                block_number = self.etherscan_client.get_block_by_timestamp(
+                    chain=self.chain, timestamp=timestamp, closest="after"
+                )
+
+                if block_number:
+                    return block_number
+
+            except Exception as e:
+                warnings.warn(
+                    f"Etherscan V2 block fetch failed for chain {self.chain}: {str(e)}. Falling back to subgraph.",
+                    UserWarning,
+                )
+
+        try:
+            data = self.fetch_graphql_data(
+                "blocks",
+                "first_block_after_ts",
+                {
+                    "timestamp_gt": int(timestamp) - 200,
+                    "timestamp_lt": int(timestamp) + 200,
+                },
+            )
+            data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
+            return int(data["blocks"][0]["number"])
+        except Exception as e:
+            raise Exception(
+                f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}"
+            )
 
     def get_twap_price_token(
         self,
