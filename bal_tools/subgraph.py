@@ -16,7 +16,7 @@ from .utils import get_abi, flatten_nested_dict, chain_ids_by_name
 from .models import *
 from .errors import NoPricesFoundError
 from .ts_config_loader import ts_config_loader
-from .etherscan import EtherscanV2Client
+from .etherscan import Etherscan
 
 
 def url_dict_from_df(df):
@@ -336,7 +336,7 @@ class Subgraph:
         if use_etherscan:
             try:
                 if not self.etherscan_client:
-                    self.etherscan_client = EtherscanV2Client()
+                    self.etherscan_client = Etherscan()
 
                 block_number = self.etherscan_client.get_block_by_timestamp(
                     chain=self.chain, timestamp=timestamp, closest="after"

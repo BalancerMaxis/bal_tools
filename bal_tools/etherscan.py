@@ -8,7 +8,7 @@ from urllib3.util.retry import Retry
 from .utils import chain_ids_by_name
 
 
-class EtherscanV2Client:
+class Etherscan:
     BASE_URL = "https://api.etherscan.io/v2/api"
 
     def __init__(self, api_key: Optional[str] = None):
