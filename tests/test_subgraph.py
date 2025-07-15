@@ -3,6 +3,8 @@ from decimal import Decimal
 import json
 import warnings
 import time
+import os
+from datetime import datetime, timedelta
 
 from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot
 from bal_tools.errors import NoPricesFoundError
@@ -170,3 +172,26 @@ def test_get_pool_protocol_version(subgraph):
         )
         == 2
     )
+
+
+def test_get_first_block_after_utc_timestamp_with_etherscan(chain, subgraph_all_chains, chains_prod):
+    if not os.getenv("ETHERSCAN_API_KEY"):
+        pytest.skip("ETHERSCAN_API_KEY not set")
+    
+    if chain not in chains_prod or chain in ["fantom", "sonic"]:
+        pytest.skip(f"Skipping {chain}")
+    
+    test_timestamp = int((datetime.now() - timedelta(days=1)).timestamp())
+    
+    try:
+        block = subgraph_all_chains.get_first_block_after_utc_timestamp(
+            test_timestamp, 
+            use_etherscan=True
+        )
+        assert isinstance(block, int)
+        assert block > 0
+    except Exception as e:
+        if "Unsupported chain" in str(e) or "Error fetching block" in str(e):
+            pytest.skip(f"Chain {chain} not supported by Etherscan V2")
+        else:
+            raise
