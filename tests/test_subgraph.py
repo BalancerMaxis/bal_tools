@@ -174,19 +174,20 @@ def test_get_pool_protocol_version(subgraph):
     )
 
 
-def test_get_first_block_after_utc_timestamp_with_etherscan(chain, subgraph_all_chains, chains_prod):
+def test_get_first_block_after_utc_timestamp_with_etherscan(
+    chain, subgraph_all_chains, chains_prod
+):
     if not os.getenv("ETHERSCAN_API_KEY"):
         pytest.skip("ETHERSCAN_API_KEY not set")
-    
+
     if chain not in chains_prod or chain in ["fantom", "sonic"]:
         pytest.skip(f"Skipping {chain}")
-    
+
     test_timestamp = int((datetime.now() - timedelta(days=1)).timestamp())
-    
+
     try:
         block = subgraph_all_chains.get_first_block_after_utc_timestamp(
-            test_timestamp, 
-            use_etherscan=True
+            test_timestamp, use_etherscan=True
         )
         assert isinstance(block, int)
         assert block > 0

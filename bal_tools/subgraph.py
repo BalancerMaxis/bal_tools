@@ -327,7 +327,9 @@ class Subgraph:
 
         return result
 
-    def get_first_block_after_utc_timestamp(self, timestamp: int, use_etherscan: bool = True) -> int:
+    def get_first_block_after_utc_timestamp(
+        self, timestamp: int, use_etherscan: bool = True
+    ) -> int:
         if timestamp > int(datetime.now().strftime("%s")):
             timestamp = int(datetime.now().strftime("%s")) - 2000
 
@@ -335,22 +337,20 @@ class Subgraph:
             try:
                 if not self.etherscan_client:
                     self.etherscan_client = EtherscanV2Client()
-                
+
                 block_number = self.etherscan_client.get_block_by_timestamp(
-                    chain=self.chain,
-                    timestamp=timestamp,
-                    closest="after"
+                    chain=self.chain, timestamp=timestamp, closest="after"
                 )
-                
+
                 if block_number:
                     return block_number
-                    
+
             except Exception as e:
                 warnings.warn(
                     f"Etherscan V2 block fetch failed for chain {self.chain}: {str(e)}. Falling back to subgraph.",
-                    UserWarning
+                    UserWarning,
                 )
-        
+
         try:
             data = self.fetch_graphql_data(
                 "blocks",
@@ -363,7 +363,9 @@ class Subgraph:
             data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
             return int(data["blocks"][0]["number"])
         except Exception as e:
-            raise Exception(f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}")
+            raise Exception(
+                f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}"
+            )
 
     def get_twap_price_token(
         self,
