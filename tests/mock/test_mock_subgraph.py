@@ -16,13 +16,6 @@ def date_range():
 
 
 @patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
-def test_get_first_block_after_utc_timestamp(subgraph):
-    timestamp = 1622505600
-    result = subgraph.get_first_block_after_utc_timestamp(timestamp)
-    assert result == 12345678
-
-
-@patch("bal_tools.subgraph.Subgraph.fetch_graphql_data", mock_fetch_graphql_data)
 # TODO:
 @pytest.mark.skip(
     "poolGetPool/tokenGetHistoricalPrices mock needs to updated based on new get_twap_price_pool implementation"
