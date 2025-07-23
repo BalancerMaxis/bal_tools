@@ -5,6 +5,7 @@ from web3 import Web3
 DRPC_NAME_OVERRIDES = {
     "mainnet": "ethereum",
     "zkevm": "polygon-zkevm",
+    "hyperevm": "hyperliquid",
 }
 ADAPTER = HTTPAdapter(
     pool_connections=20,
