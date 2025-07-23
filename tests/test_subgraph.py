@@ -112,6 +112,15 @@ def test_find_all_subgraph_urls(
         pytest.skip(
             f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain}"
         )
+    if subgraph_all_chains.chain == "hyperevm" and subgraph_type in [
+        "core",
+        "gauges",
+        "blocks",
+        "aura",
+    ]:
+        pytest.skip(
+            f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain} - V3 only chain"
+        )
     if subgraph_type in [
         "vault-v3",
         "pools-v3",

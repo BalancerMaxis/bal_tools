@@ -298,6 +298,7 @@ class BalPoolsGauges:
             "base": {},
             "mode": {},
             "fraxtal": {},
+            "hyperevm": {},
             "optimism": {},
         }
 

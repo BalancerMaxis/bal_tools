@@ -131,6 +131,8 @@ class Subgraph:
             if subgraph not in ts_keys_map:
                 return None
             url = config["subgraphs"][ts_keys_map[subgraph]]
+            if not url:
+                return None
             if "${env.THEGRAPH_API_KEY_BALANCER}" in url:
                 graph_api_key = os.getenv("GRAPH_API_KEY")
                 if graph_api_key:
@@ -146,9 +148,10 @@ class Subgraph:
                         f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
                         UserWarning,
                     )
+                    return None
+            return url
         except:
             return None
-        return None
 
     def get_subgraph_url_vault_v3(self, chain: str) -> str:
         graph_api_key = os.getenv("GRAPH_API_KEY")
@@ -184,27 +187,30 @@ class Subgraph:
         chain_url_slug = "gnosis-chain" if self.chain == "gnosis" else self.chain
         config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/master/src/lib/config/{chain_url_slug}/index.ts"
         found_magic_word = False
-        with urlopen(config_file) as f:
-            for line in f:
-                if found_magic_word or magic_word + " `" in str(line):
-                    # url is on this line
-                    r = re.search("`(.*)`", line.decode("utf-8"))
-                    try:
-                        url = r.group(1)
-                        if urlparse(url).scheme in ["http", "https"]:
-                            graph_api_key = os.getenv("GRAPH_API_KEY")
-                            if "${keys.graph}" in url and not graph_api_key:
-                                warnings.warn(
-                                    f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
-                                    UserWarning,
-                                )
-                                break
-                            return url.replace("${keys.graph}", graph_api_key)
-                    except AttributeError:
-                        break
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+        try:
+            with urlopen(config_file) as f:
+                for line in f:
+                    if found_magic_word or magic_word + " `" in str(line):
+                        # url is on this line
+                        r = re.search("`(.*)`", line.decode("utf-8"))
+                        try:
+                            url = r.group(1)
+                            if urlparse(url).scheme in ["http", "https"]:
+                                graph_api_key = os.getenv("GRAPH_API_KEY")
+                                if "${keys.graph}" in url and not graph_api_key:
+                                    warnings.warn(
+                                        f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
+                                        UserWarning,
+                                    )
+                                    break
+                                return url.replace("${keys.graph}", graph_api_key)
+                        except AttributeError:
+                            break
+                    if magic_word in str(line):
+                        # url is on next line, return it on the next iteration
+                        found_magic_word = True
+        except:
+            pass
         return None
 
     def get_subgraph_url_sdk(self, subgraph):
@@ -219,35 +225,38 @@ class Subgraph:
         sdk_file = f"https://raw.githubusercontent.com/balancer/balancer-sdk/develop/balancer-js/src/lib/constants/config.ts"
         found_magic_word = False
         urls_reached = False
-        with urlopen(sdk_file) as f:
-            for line in f:
-                if "[Network." in str(line):
-                    chain_detected = (
-                        str(line).split("[Network.")[1].split("]")[0].lower()
-                    )
-                    if chain_detected == self.chain:
-                        for line in f:
-                            if "urls: {" in str(line) or urls_reached:
-                                urls_reached = True
-                                if "}," in str(line):
-                                    return None
-                                if found_magic_word:
-                                    url = (
-                                        line.decode("utf-8")
-                                        .strip()
-                                        .split(",")[0]
-                                        .strip(" ,'")
-                                    )
-                                    url = re.sub(
-                                        r"(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+",
-                                        "",
-                                        url,
-                                    )
-                                    if urlparse(url).scheme in ["http", "https"]:
-                                        return url
-                                if magic_word in str(line):
-                                    # url is on next line, return it on the next iteration
-                                    found_magic_word = True
+        try:
+            with urlopen(sdk_file) as f:
+                for line in f:
+                    if "[Network." in str(line):
+                        chain_detected = (
+                            str(line).split("[Network.")[1].split("]")[0].lower()
+                        )
+                        if chain_detected == self.chain:
+                            for line in f:
+                                if "urls: {" in str(line) or urls_reached:
+                                    urls_reached = True
+                                    if "}," in str(line):
+                                        return None
+                                    if found_magic_word:
+                                        url = (
+                                            line.decode("utf-8")
+                                            .strip()
+                                            .split(",")[0]
+                                            .strip(" ,'")
+                                        )
+                                        url = re.sub(
+                                            r"(\s|\u180B|\u200B|\u200C|\u200D|\u2060|\uFEFF)+",
+                                            "",
+                                            url,
+                                        )
+                                        if urlparse(url).scheme in ["http", "https"]:
+                                            return url
+                                    if magic_word in str(line):
+                                        # url is on next line, return it on the next iteration
+                                        found_magic_word = True
+        except:
+            pass
         return None
 
     def get_subgraph_url_legacy(self, subgraph):
@@ -262,20 +271,28 @@ class Subgraph:
         config_file = f"https://raw.githubusercontent.com/balancer/frontend-v2/master/src/lib/config/{chain_url_slug}/index.ts"
 
         found_magic_word = False
-        with urlopen(config_file) as f:
-            for line in f:
-                if found_magic_word:
-                    url = line.decode("utf-8").strip().strip(" ,'")
-                    if urlparse(url).scheme in ["http", "https"]:
-                        return url
-                if magic_word + " " in str(line):
-                    # url is on same line
-                    url = line.decode("utf-8").split(magic_word)[1].strip().strip(",'")
-                    if urlparse(url).scheme in ["http", "https"]:
-                        return url
-                if magic_word in str(line):
-                    # url is on next line, return it on the next iteration
-                    found_magic_word = True
+        try:
+            with urlopen(config_file) as f:
+                for line in f:
+                    if found_magic_word:
+                        url = line.decode("utf-8").strip().strip(" ,'")
+                        if urlparse(url).scheme in ["http", "https"]:
+                            return url
+                    if magic_word + " " in str(line):
+                        # url is on same line
+                        url = (
+                            line.decode("utf-8")
+                            .split(magic_word)[1]
+                            .strip()
+                            .strip(",'")
+                        )
+                        if urlparse(url).scheme in ["http", "https"]:
+                            return url
+                    if magic_word in str(line):
+                        # url is on next line, return it on the next iteration
+                        found_magic_word = True
+        except:
+            pass
         return None
 
     def fetch_graphql_data(
