@@ -97,6 +97,8 @@ class Subgraph:
         - https url of the subgraph
         """
         # before anything else, try to get the url from the latest backend config
+        if subgraph == "aura":
+            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
         url = self.get_subgraph_url_from_backend_config(subgraph)
         if url:
             return url
@@ -104,8 +106,6 @@ class Subgraph:
             if self.chain == "sepolia":
                 return "https://test-api-v3.balancer.fi"
             return "https://api-v3.balancer.fi"
-        if subgraph == "aura":
-            return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
         if subgraph == "vault-v3":
             return self.get_subgraph_url_vault_v3(self.chain)
         if subgraph == "pools-v3":
