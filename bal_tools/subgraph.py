@@ -133,14 +133,21 @@ class Subgraph:
             url = config["subgraphs"][ts_keys_map[subgraph]]
             if not url:
                 return None
-            if "${env.THEGRAPH_API_KEY_BALANCER}" in url:
+            if (
+                "${env.THEGRAPH_API_KEY_BALANCER}" or "${env.THEGRAPH_API_KEY_FANTOM}"
+            ) in url:
                 graph_api_key = os.getenv("GRAPH_API_KEY")
                 if graph_api_key:
                     try:
-                        return url.replace(
+                        url = url.replace(
                             "${env.THEGRAPH_API_KEY_BALANCER}",
                             os.getenv("GRAPH_API_KEY"),
                         )
+                        url = url.replace(
+                            "${env.THEGRAPH_API_KEY_FANTOM}",
+                            os.getenv("GRAPH_API_KEY"),
+                        )
+                        return url
                     except:
                         return None
                 else:
