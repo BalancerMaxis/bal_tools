@@ -23,6 +23,7 @@ setup(
     url="https://github.com/BalancerMaxis/bal_tools",
     install_requires=[
         "wheel",
+        "web3>=6.0.0",
         "pathlib>=1.0",
         "numpy==1.26.4",
         "pandas",
