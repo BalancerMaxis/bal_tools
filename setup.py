@@ -33,7 +33,7 @@ setup(
         "pydantic",
         "json-fix",
         "lxml",
-        "dontenv",
+        "dotenv",
     ],
     keywords=["python", "first package"],
     classifiers=[

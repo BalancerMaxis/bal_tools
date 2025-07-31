@@ -9,4 +9,4 @@ gql[requests]
 pydantic
 json-fix
 lxml
-dontenv
+dotenv
