@@ -7,7 +7,7 @@ class InputType:
     name: str
     type: str
     internalType: Optional[str] = None
-    components: Optional[List['InputType']] = None
+    components: Optional[List["InputType"]] = None
 
 
 @dataclass
@@ -30,7 +30,7 @@ def parse_input_type(input_desc: dict) -> InputType:
     name = input_desc.get("name", "")
     type_str = input_desc.get("type", "")
     internal_type = input_desc.get("internalType", type_str)
-    
+
     # Preserve components for tuple types
     components = None
     if type_str.startswith("tuple"):
@@ -38,12 +38,9 @@ def parse_input_type(input_desc: dict) -> InputType:
         # Recursively parse nested components
         if components_raw:
             components = [parse_input_type(comp) for comp in components_raw]
-    
+
     return InputType(
-        name=name,
-        type=type_str,
-        internalType=internal_type,
-        components=components
+        name=name, type=type_str, internalType=internal_type, components=components
     )
 
 

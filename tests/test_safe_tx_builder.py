@@ -64,9 +64,11 @@ def test_tuple_type_preservation(reward_distributor_abi):
     """Test that tuple types with components are preserved in the output, not collapsed."""
     builder = SafeTxBuilder("0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f")
     reward_distributor_address = "0x0000000000000000000000000000000000000001"
-    
-    reward_distributor = SafeContract(reward_distributor_address, reward_distributor_abi)
-    
+
+    reward_distributor = SafeContract(
+        reward_distributor_address, reward_distributor_abi
+    )
+
     claims = [
         [
             "0x1234567890123456789012345678901234567890123456789012345678901234",
@@ -74,33 +76,35 @@ def test_tuple_type_preservation(reward_distributor_abi):
             1000000000000000000,
             [
                 "0xabcdef1234567890123456789012345678901234567890123456789012345678",
-                "0xfedcba0987654321098765432109876543210987654321098765432109876543"
-            ]
+                "0xfedcba0987654321098765432109876543210987654321098765432109876543",
+            ],
         ]
     ]
     reward_distributor.claim(claims)
-    
+
     payload = builder.base_payload
-    
+
     assert len(payload.transactions) == 1
     tx = payload.transactions[0]
-    
+
     assert tx.to == reward_distributor_address
     assert tx.contractMethod.name == "claim"
-    
+
     # Verify the input has the correct type (tuple[])
     assert len(tx.contractMethod.inputs) == 1
     claim_input = tx.contractMethod.inputs[0]
-    
+
     # Check that the type is preserved as "tuple[]"
     assert claim_input.name == "_claims"
     assert claim_input.type == "tuple[]"
     assert claim_input.internalType == "struct RewardDistributor.Claim[]"
-    
-    assert hasattr(claim_input, 'components'), "Input should have components attribute"
+
+    assert hasattr(claim_input, "components"), "Input should have components attribute"
     assert claim_input.components is not None, "Components should not be None"
-    assert len(claim_input.components) == 4, "Should have 4 components in the Claim struct"
-    
+    assert (
+        len(claim_input.components) == 4
+    ), "Should have 4 components in the Claim struct"
+
     # Verify the input values are correctly stored
     assert "_claims" in tx.contractInputsValues
     assert tx.contractInputsValues["_claims"] == str(claims)
