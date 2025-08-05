@@ -59,20 +59,19 @@ class SafeContract:
         except Exception as e:
             raise ValueError(f"Failed to convert value to string: {e}")
 
-    def _convert_components_to_dict(self, components):
+    def _convert_components_to_inputtype(self, components):
         result = []
         for comp in components:
-            comp_dict = {
-                "name": comp.name,
-                "type": comp.type,
-                "internalType": comp.internalType or comp.type,
-            }
+            input_type = self.tx_builder.load_template(TemplateType.INPUT_TYPE)
+            input_type.name = comp.name
+            input_type.type = comp.type
+            input_type.internalType = comp.internalType or comp.type
+            
             # Recursively handle nested components
-            if hasattr(comp, "components") and comp.components:
-                comp_dict["components"] = self._convert_components_to_dict(
-                    comp.components
-                )
-            result.append(comp_dict)
+            if hasattr(comp, 'components') and comp.components:
+                input_type.components = self._convert_components_to_inputtype(comp.components)
+            
+            result.append(input_type)
         return result
 
     def call_function(self, func: ABIFunction, args: tuple, kwargs: dict = {}):
@@ -96,12 +95,10 @@ class SafeContract:
             input_template.name = input_type.name
             input_template.type = input_type.type
             input_template.internalType = input_type.internalType or input_type.type
-
-            if hasattr(input_type, "components") and input_type.components:
-                input_template.components = self._convert_components_to_dict(
-                    input_type.components
-                )
-
+            
+            if hasattr(input_type, 'components') and input_type.components:
+                input_template.components = self._convert_components_to_inputtype(input_type.components)
+            
             tx.contractMethod.inputs.append(input_template)
             tx.contractInputsValues[input_type.name] = self._handle_type(arg)
 
