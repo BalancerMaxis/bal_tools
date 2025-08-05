@@ -106,22 +106,22 @@ def test_tuple_type_preservation(reward_distributor_abi):
     ), "Should have 4 components in the Claim struct"
 
     components = claim_input.components
-    
+
     assert components[0].name == "identifier"
     assert components[0].type == "bytes32"
     assert components[0].internalType == "bytes32"
     assert components[0].components is None
-    
+
     assert components[1].name == "account"
     assert components[1].type == "address"
     assert components[1].internalType == "address"
     assert components[1].components is None
-    
+
     assert components[2].name == "amount"
     assert components[2].type == "uint256"
     assert components[2].internalType == "uint256"
     assert components[2].components is None
-    
+
     assert components[3].name == "merkleProof"
     assert components[3].type == "bytes32[]"
     assert components[3].internalType == "bytes32[]"
@@ -130,16 +130,19 @@ def test_tuple_type_preservation(reward_distributor_abi):
     # Verify the input values are correctly stored
     assert "_claims" in tx.contractInputsValues
     assert tx.contractInputsValues["_claims"] == str(claims)
-    
+
     # Test JSON serialization excludes None components
     import json
+
     json_output = json.loads(builder.base_payload.model_dump_json(exclude_none=True))
     tx_json = json_output["transactions"][0]
     claim_input_json = tx_json["contractMethod"]["inputs"][0]
-    
+
     # Tuple type should have components
     assert "components" in claim_input_json
-    
+
     # Non-tuple components should NOT have the components field at all
     for component_json in claim_input_json["components"]:
-        assert "components" not in component_json, f"Non-tuple type {component_json['type']} should not have components field in JSON"
+        assert (
+            "components" not in component_json
+        ), f"Non-tuple type {component_json['type']} should not have components field in JSON"
