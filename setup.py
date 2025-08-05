@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = "0.1.18"
+VERSION = "0.1.19"
 DESCRIPTION = "Balancer Tools"
 LONG_DESCRIPTION = "Balancer Maxi helper and ecosystem tools"
 
@@ -23,7 +23,7 @@ setup(
     url="https://github.com/BalancerMaxis/bal_tools",
     install_requires=[
         "wheel",
-        "eth-brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x",
+        "web3>=6.0.0",
         "pathlib>=1.0",
         "numpy==1.26.4",
         "pandas",
@@ -33,7 +33,13 @@ setup(
         "pydantic",
         "json-fix",
         "lxml",
+        "dotenv",
     ],
+    extras_require={
+        "brownie": [
+            "eth-brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x"
+        ],
+    },
     keywords=["python", "first package"],
     classifiers=[
         "Development Status :: 4 - Beta",

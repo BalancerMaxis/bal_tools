@@ -1,5 +1,5 @@
 wheel
-git+https://github.com/BalancerMaxis/brownie.git@v1.20.x#egg=eth-brownie
+web3>=6.0.0
 pathlib>=1.0
 numpy==1.26.4
 pandas
@@ -9,3 +9,4 @@ gql[requests]
 pydantic
 json-fix
 lxml
+dotenv
