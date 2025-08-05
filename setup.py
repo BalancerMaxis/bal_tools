@@ -35,6 +35,11 @@ setup(
         "lxml",
         "dotenv",
     ],
+    extras_require={
+        "brownie": [
+            "eth-brownie @ git+https://github.com/BalancerMaxis/brownie.git@v1.20.x"
+        ],
+    },
     keywords=["python", "first package"],
     classifiers=[
         "Development Status :: 4 - Beta",
