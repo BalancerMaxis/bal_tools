@@ -60,12 +60,14 @@ class SafeContract:
             raise ValueError(f"Failed to convert value to string: {e}")
 
     def _convert_components_to_inputtype(self, components):
+        if components is None:
+            return None
         result = []
         for comp in components:
             input_type = self.tx_builder.load_template(TemplateType.INPUT_TYPE)
             input_type.name = comp.name
             input_type.type = comp.type
-            input_type.internalType = comp.internalType or comp.type
+            input_type.internalType = getattr(comp, "internalType", None) or comp.type
 
             # Recursively handle nested components
             if hasattr(comp, "components") and comp.components:
