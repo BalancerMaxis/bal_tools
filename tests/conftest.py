@@ -83,6 +83,12 @@ def bridge_abi():
 
 
 @pytest.fixture(scope="module")
+def reward_distributor_abi():
+    with open("tests/abi/RewardDistributor.json", "r") as file:
+        return json.load(file)
+
+
+@pytest.fixture(scope="module")
 def pool_snapshot_blocks():
     return {
         "arbitrum": 200000000,

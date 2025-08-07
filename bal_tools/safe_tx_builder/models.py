@@ -19,6 +19,7 @@ class InputType(BaseModel):
     name: str = Field(default="")
     type: str = Field(default="")
     internalType: str = Field(default="")
+    components: Optional[List["InputType"]] = Field(default=None)
 
 
 class ContractMethod(BaseModel):
