@@ -35,8 +35,8 @@ def parse_input_type(input_desc: dict) -> InputType:
     components = None
     if type_str.startswith("tuple"):
         components_raw = input_desc.get("components", [])
-        # Recursively parse nested components
-        if components_raw:
+        # Recursively parse nested components - validate type safety
+        if components_raw and isinstance(components_raw, list):
             components = [parse_input_type(comp) for comp in components_raw]
 
     return InputType(
