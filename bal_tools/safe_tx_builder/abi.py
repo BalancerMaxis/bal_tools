@@ -6,6 +6,8 @@ from typing import List, Optional
 class InputType:
     name: str
     type: str
+    internalType: Optional[str] = None
+    components: Optional[List["InputType"]] = None
 
 
 @dataclass
@@ -23,18 +25,33 @@ class ContractABI:
     name: Optional[str] = None
 
 
+def parse_input_type(input_desc: dict) -> InputType:
+    """Parse input type preserving component structure for tuples."""
+    name = input_desc.get("name", "")
+    type_str = input_desc.get("type", "")
+    internal_type = input_desc.get("internalType", type_str)
+
+    # Preserve components for tuple types
+    components = None
+    if type_str.startswith("tuple"):
+        components_raw = input_desc.get("components", [])
+        # Recursively parse nested components - validate type safety
+        if components_raw and isinstance(components_raw, list):
+            components = [parse_input_type(comp) for comp in components_raw]
+
+    return InputType(
+        name=name, type=type_str, internalType=internal_type, components=components
+    )
+
+
 def parse_json_abi(abi: dict) -> ContractABI:
     functions = []
     for entry in abi:
         if entry["type"] == "function":
             name = entry["name"]
-            input_types = [collapse_if_tuple(inputs) for inputs in entry["inputs"]]
-            input_names = [i["name"] for i in entry["inputs"]]
-            inputs = [
-                InputType(name=name, type=typ)
-                for name, typ in zip(input_names, input_types)
-            ]
-            outputs = [collapse_if_tuple(outputs) for outputs in entry["outputs"]]
+            # Parse inputs preserving structure
+            inputs = [parse_input_type(inp) for inp in entry["inputs"]]
+            outputs = [o.get("type", "") for o in entry["outputs"]]
             constant = entry["stateMutability"] in ("view", "pure")
             payable = entry["stateMutability"] == "payable"
             functions.append(
@@ -47,17 +64,3 @@ def parse_json_abi(abi: dict) -> ContractABI:
                 )
             )
     return ContractABI(functions)
-
-
-def collapse_if_tuple(abi: dict) -> str:
-    typ = abi["type"]
-    if not typ.startswith("tuple"):
-        return typ
-
-    delimited = ",".join(collapse_if_tuple(c) for c in abi["components"])
-    # Whatever comes after "tuple" is the array dims.  The ABI spec states that
-    # this will have the form "", "[]", or "[k]".
-    array_dim = typ[5:]
-    collapsed = "({}){}".format(delimited, array_dim)
-
-    return collapsed

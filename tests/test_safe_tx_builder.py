@@ -58,3 +58,91 @@ def test_multiple_functions_with_same_name(bridge_abi):
     bridge.relayTokens(usdc_address, int(1e18))
 
     builder.output_payload("tests/payload_outputs/multiple_names.json")
+
+
+def test_tuple_type_preservation(reward_distributor_abi):
+    """Test that tuple types with components are preserved in the output, not collapsed."""
+    builder = SafeTxBuilder("0x10A19e7eE7d7F8a52822f6817de8ea18204F2e4f")
+    reward_distributor_address = "0x0000000000000000000000000000000000000001"
+
+    reward_distributor = SafeContract(
+        reward_distributor_address, reward_distributor_abi
+    )
+
+    claims = [
+        [
+            "0x1234567890123456789012345678901234567890123456789012345678901234",
+            "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+            1000000000000000000,
+            [
+                "0xabcdef1234567890123456789012345678901234567890123456789012345678",
+                "0xfedcba0987654321098765432109876543210987654321098765432109876543",
+            ],
+        ]
+    ]
+    reward_distributor.claim(claims)
+
+    payload = builder.base_payload
+
+    assert len(payload.transactions) == 1
+    tx = payload.transactions[0]
+
+    assert tx.to == reward_distributor_address
+    assert tx.contractMethod.name == "claim"
+
+    # Verify the input has the correct type (tuple[])
+    assert len(tx.contractMethod.inputs) == 1
+    claim_input = tx.contractMethod.inputs[0]
+
+    # Check that the type is preserved as "tuple[]"
+    assert claim_input.name == "_claims"
+    assert claim_input.type == "tuple[]"
+    assert claim_input.internalType == "struct RewardDistributor.Claim[]"
+
+    assert hasattr(claim_input, "components"), "Input should have components attribute"
+    assert claim_input.components is not None, "Components should not be None"
+    assert (
+        len(claim_input.components) == 4
+    ), "Should have 4 components in the Claim struct"
+
+    components = claim_input.components
+
+    assert components[0].name == "identifier"
+    assert components[0].type == "bytes32"
+    assert components[0].internalType == "bytes32"
+    assert components[0].components is None
+
+    assert components[1].name == "account"
+    assert components[1].type == "address"
+    assert components[1].internalType == "address"
+    assert components[1].components is None
+
+    assert components[2].name == "amount"
+    assert components[2].type == "uint256"
+    assert components[2].internalType == "uint256"
+    assert components[2].components is None
+
+    assert components[3].name == "merkleProof"
+    assert components[3].type == "bytes32[]"
+    assert components[3].internalType == "bytes32[]"
+    assert components[3].components is None
+
+    # Verify the input values are correctly stored
+    assert "_claims" in tx.contractInputsValues
+    assert tx.contractInputsValues["_claims"] == str(claims)
+
+    # Test JSON serialization excludes None components
+    import json
+
+    json_output = json.loads(builder.base_payload.model_dump_json(exclude_none=True))
+    tx_json = json_output["transactions"][0]
+    claim_input_json = tx_json["contractMethod"]["inputs"][0]
+
+    # Tuple type should have components
+    assert "components" in claim_input_json
+
+    # Non-tuple components should NOT have the components field at all
+    for component_json in claim_input_json["components"]:
+        assert (
+            "components" not in component_json
+        ), f"Non-tuple type {component_json['type']} should not have components field in JSON"
