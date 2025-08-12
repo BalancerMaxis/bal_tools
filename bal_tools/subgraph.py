@@ -141,11 +141,11 @@ class Subgraph:
                     try:
                         url = url.replace(
                             "${env.THEGRAPH_API_KEY_BALANCER}",
-                            os.getenv("GRAPH_API_KEY"),
+                            graph_api_key,
                         )
                         url = url.replace(
                             "${env.THEGRAPH_API_KEY_FANTOM}",
-                            os.getenv("GRAPH_API_KEY"),
+                            graph_api_key,
                         )
                         return url
                     except:
@@ -204,13 +204,15 @@ class Subgraph:
                             url = r.group(1)
                             if urlparse(url).scheme in ["http", "https"]:
                                 graph_api_key = os.getenv("GRAPH_API_KEY")
-                                if "${keys.graph}" in url and not graph_api_key:
-                                    warnings.warn(
-                                        f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
-                                        UserWarning,
-                                    )
-                                    break
-                                return url.replace("${keys.graph}", graph_api_key)
+                                if "${keys.graph}" in url:
+                                    if not graph_api_key:
+                                        warnings.warn(
+                                            f"`GRAPH_API_KEY` not set. may be rate limited or have stale data for subgraph:{subgraph} url:{url}",
+                                            UserWarning,
+                                        )
+                                        return None
+                                    return url.replace("${keys.graph}", graph_api_key)
+                                return url
                         except AttributeError:
                             break
                     if magic_word in str(line):
