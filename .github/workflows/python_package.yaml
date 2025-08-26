@@ -24,7 +24,6 @@ jobs:
           pip install -r bal_tools/requirements.txt
       - name: Test with pytest
         env:
-          ETHNODEURL: ${{ secrets.ETHNODEURL }}
           DRPC_KEY: ${{ secrets.DRPC_KEY }}
           GRAPH_API_KEY: ${{ secrets.GRAPH_API_KEY }}
           ETHERSCAN_API_KEY: ${{ secrets.ETHERSCAN_API_KEY }}
