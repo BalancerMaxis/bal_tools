@@ -54,13 +54,10 @@ def _to_json(obj: str) -> str:
         return f'"{content}"'
 
     obj = re.sub(r"`([^`]*)`", convert_backtick, obj, flags=re.DOTALL)
-
-    # 1b) Handle arrow functions by converting them to null
-    # This handles parser functions like (data: any) => Number(data[5]) / 1e27
-    # First handle simple arrow functions (but not those that are part of .map())
-    # Negative lookbehind to avoid matching .map( arrow functions
-    obj = re.sub(r"(?<!\.map)\([^)]*\)\s*=>\s*[^,\n]+", "null", obj)
-
+    
+    # 1b) We'll handle arrow functions later, after dealing with .map() calls
+    # Skip this for now to preserve .map() patterns
+    
     # Handle arrow functions with type annotations like (token: any): [string, number] => [...]
     # These are more complex and can span multiple lines
     def replace_arrow_functions(text):
@@ -130,9 +127,23 @@ def _to_json(obj: str) -> str:
                         brace_count += 1
                     elif text[i] == "}":
                         brace_count -= 1
-
-            # Now skip the closing ))
-            while i < len(text) and text[i] in ") \n":
+            
+            # Now we need to skip past the }) that closes the object
+            # and the ) that closes the map function
+            # We should be at the closing } now, skip it
+            if i < len(text) and text[i] == '}':
+                i += 1
+            # Skip whitespace
+            while i < len(text) and text[i] in ' \n\r\t':
+                i += 1
+            # Skip the ) that closes the arrow function body
+            if i < len(text) and text[i] == ')':
+                i += 1
+            # Skip more whitespace
+            while i < len(text) and text[i] in ' \n\r\t':
+                i += 1  
+            # Skip the ) that closes the map call
+            if i < len(text) and text[i] == ')':
                 i += 1
 
             # Replace the entire spread...map expression with an empty array
@@ -145,9 +156,62 @@ def _to_json(obj: str) -> str:
     obj = handle_spread_with_map(obj)
 
     # Then handle simple spread operators: ...[array] -> [array]
-    obj = re.sub(r"\.\.\.\s*\[", "[", obj)
-
-    # 1d) Handle JSON.stringify() calls with nested content
+    obj = re.sub(r'\.\.\.\s*\[', '[', obj)
+    
+    # 1c3) Handle remaining .map() calls that weren't caught by spread handler
+    # These are arrays that end with ].map((param) => ({...}))
+    def handle_remaining_maps(text):
+        # Find patterns like ].map((param) => ({...}))
+        pattern = r'\]\.map\s*\([^)]*\)\s*=>\s*\({'
+        match = re.search(pattern, text)
+        
+        if match:
+            # Find where the array starts (work backwards from ])
+            array_end = match.start()
+            # Find the matching [ by counting brackets backwards
+            bracket_count = 1
+            i = array_end - 1
+            
+            while i >= 0 and bracket_count > 0:
+                if text[i] == ']':
+                    bracket_count += 1
+                elif text[i] == '[':
+                    bracket_count -= 1
+                i -= 1
+            
+            array_start = i + 1
+            
+            # Now find the end of the map function (similar to before)
+            map_start = match.end() - 1  # Position at the { after =>
+            brace_count = 1
+            j = map_start
+            
+            while j < len(text) and brace_count > 0:
+                j += 1
+                if j < len(text):
+                    if text[j] == '{':
+                        brace_count += 1
+                    elif text[j] == '}':
+                        brace_count -= 1
+            
+            # Skip the closing ))
+            while j < len(text) and text[j] in ')\n\r\t ':
+                j += 1
+            
+            # Replace the entire array.map expression with an empty array
+            text = text[:array_start] + '[]' + text[j:]
+            # Recursively handle any remaining patterns
+            return handle_remaining_maps(text)
+        
+        return text
+    
+    obj = handle_remaining_maps(obj)
+    
+    # 1d) Now handle remaining simple arrow functions (after .map() has been processed)
+    # This handles parser functions like (data: any) => Number(data[5]) / 1e27
+    obj = re.sub(r'\([^)]*\)\s*=>\s*[^,\n]+', 'null', obj)
+    
+    # 1e) Handle JSON.stringify() calls with nested content
     # Find JSON.stringify and match its balanced parentheses
     def replace_json_stringify(text):
         while "JSON.stringify(" in text:
