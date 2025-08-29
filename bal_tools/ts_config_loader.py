@@ -54,6 +54,126 @@ def _to_json(obj: str) -> str:
         return f'"{content}"'
 
     obj = re.sub(r"`([^`]*)`", convert_backtick, obj, flags=re.DOTALL)
+    
+    # 1b) Handle arrow functions by converting them to null
+    # This handles parser functions like (data: any) => Number(data[5]) / 1e27
+    # First handle simple arrow functions (but not those that are part of .map())
+    # Negative lookbehind to avoid matching .map( arrow functions
+    obj = re.sub(r'(?<!\.map)\([^)]*\)\s*=>\s*[^,\n]+', 'null', obj)
+    
+    # Handle arrow functions with type annotations like (token: any): [string, number] => [...]
+    # These are more complex and can span multiple lines
+    def replace_arrow_functions(text):
+        # Look for patterns like "(param: type): returnType => "
+        pattern = r'\([^)]*\)\s*:\s*[^=]*=>\s*'
+        matches = list(re.finditer(pattern, text))
+        
+        # Process from end to start to maintain indices
+        for match in reversed(matches):
+            start = match.start()
+            # Find the end of the arrow function body
+            # It ends at a comma or closing brace/bracket at the same level
+            i = match.end()
+            depth = 0
+            in_string = False
+            string_char = None
+            
+            while i < len(text):
+                if not in_string:
+                    if text[i] in '"\'':
+                        in_string = True
+                        string_char = text[i]
+                    elif text[i] in '[{(':
+                        depth += 1
+                    elif text[i] in ']})':
+                        depth -= 1
+                        if depth < 0:
+                            # Found the end
+                            break
+                    elif text[i] == ',' and depth == 0:
+                        # Found the end
+                        break
+                else:
+                    if text[i] == string_char and (i == 0 or text[i-1] != '\\\\'):
+                        in_string = False
+                i += 1
+            
+            # Replace the arrow function with null
+            text = text[:start] + 'null' + text[i:]
+        
+        return text
+    
+    obj = replace_arrow_functions(obj)
+    
+    # 1c) Handle $.xxx patterns (JSONPath expressions) by quoting them
+    # This handles path values like $.apy or $.data
+    obj = re.sub(r'(\$\.[a-zA-Z0-9_.]+)', r'"\1"', obj)
+    
+    # 1c2) Handle spread operator with arrays and potential .map() calls
+    # More robust handling of ...[array].map() patterns
+    def handle_spread_with_map(text):
+        # Find patterns like ...[...].map(...)
+        pattern = r'\.\.\.\s*\[[^\]]*\]\.map\s*\([^)]*\)\s*=>\s*\({'
+        match = re.search(pattern, text)
+        
+        if match:
+            # Find the start of the spread operator
+            start = match.start()
+            # Find the end of the map function - need to find matching }))
+            i = match.end() - 1  # Position at the { after =>
+            brace_count = 1
+            
+            while i < len(text) and brace_count > 0:
+                i += 1
+                if i < len(text):
+                    if text[i] == '{':
+                        brace_count += 1
+                    elif text[i] == '}':
+                        brace_count -= 1
+            
+            # Now skip the closing ))
+            while i < len(text) and text[i] in ') \n':
+                i += 1
+            
+            # Replace the entire spread...map expression with an empty array
+            text = text[:start] + '[]' + text[i:]
+            # Recursively handle any remaining patterns
+            return handle_spread_with_map(text)
+        
+        return text
+    
+    obj = handle_spread_with_map(obj)
+    
+    # Then handle simple spread operators: ...[array] -> [array]
+    obj = re.sub(r'\.\.\.\s*\[', '[', obj)
+    
+    # 1d) Handle JSON.stringify() calls with nested content
+    # Find JSON.stringify and match its balanced parentheses
+    def replace_json_stringify(text):
+        while 'JSON.stringify(' in text:
+            start = text.find('JSON.stringify(')
+            if start == -1:
+                break
+            
+            # Find the matching closing parenthesis
+            open_count = 0
+            i = start + len('JSON.stringify(')
+            while i < len(text):
+                if text[i] == '(':
+                    open_count += 1
+                elif text[i] == ')':
+                    if open_count == 0:
+                        # Found the matching closing parenthesis
+                        text = text[:start] + 'null' + text[i+1:]
+                        break
+                    open_count -= 1
+                i += 1
+            else:
+                # If we couldn't find a matching paren, just replace with null
+                text = text[:start] + 'null' + text[start+15:]
+        return text
+    
+    obj = replace_json_stringify(obj)
 
     # 2) Strip comments (after backtick conversion to avoid URL issues)
     obj = re.sub(r"/\*[\s\S]*?\*/", "", obj)
