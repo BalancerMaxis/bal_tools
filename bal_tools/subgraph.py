@@ -6,6 +6,7 @@ from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import Union, List, Callable, Dict
 import warnings
+import numpy as np
 
 import pandas as pd
 from gql import Client, gql
@@ -393,6 +394,19 @@ class Subgraph:
                 f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}"
             )
 
+    def filter_outliers_and_average(self, prices: List[Decimal], iqr_multiplier: float = 100_000.0) -> Decimal:
+        arr = np.array([float(p) for p in prices])
+
+        if len(arr) == 1:
+            return prices[0]
+
+        q1, q3 = np.percentile(arr, [25, 75])
+        iqr = q3 - q1
+        bounds = (q1 - iqr_multiplier * iqr, q3 + iqr_multiplier * iqr)
+        filtered = arr[(arr >= bounds[0]) & (arr <= bounds[1])]
+
+        return Decimal(str(np.mean(filtered) if len(filtered) > 0 else np.median(arr)))
+
     def get_twap_price_token(
         self,
         addresses: Union[List[str], str],
@@ -449,7 +463,8 @@ class Subgraph:
                 raise NoPricesFoundError(
                     f"No prices found for {address} on {chain} between {start_date_ts} UTC and {end_date_ts} UTC"
                 )
-            return TWAPResult(address=address, twap_price=sum(prices) / len(prices))
+            twap_price = self.filter_outliers_and_average(prices)
+            return TWAPResult(address=address, twap_price=twap_price)
 
         results = [calc_twap(addr) for addr in addresses]
         return results[0] if len(results) == 1 else results
