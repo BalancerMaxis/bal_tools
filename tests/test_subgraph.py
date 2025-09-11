@@ -210,14 +210,14 @@ def test_get_first_block_after_utc_timestamp_with_etherscan(
 def test_siusd_outlier_price_handling():
     subgraph = Subgraph()
     siusd_address = "0xdbdc1ef57537e34680b898e1febd3d68c7389bcb"
-    
+
     # inclusive of corrupted timestamp at 1756807200
     date_range = (1756684800, 1756944000)
 
     result = subgraph.get_twap_price_token(
-        addresses=siusd_address,
-        chain=GqlChain.MAINNET,
-        date_range=date_range
+        addresses=siusd_address, chain=GqlChain.MAINNET, date_range=date_range
     )
 
-    assert result.twap_price < Decimal("10"), f"TWAP price {result.twap_price} suggests corruption wasn't filtered"
+    assert result.twap_price < Decimal(
+        "10"
+    ), f"TWAP price {result.twap_price} suggests corruption wasn't filtered"

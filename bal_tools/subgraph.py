@@ -394,7 +394,9 @@ class Subgraph:
                 f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}"
             )
 
-    def filter_outliers_and_average(self, prices: List[Decimal], iqr_multiplier: float = 100_000.0) -> Decimal:
+    def filter_outliers_and_average(
+        self, prices: List[Decimal], iqr_multiplier: float = 100_000.0
+    ) -> Decimal:
         arr = np.array([float(p) for p in prices])
 
         if len(arr) == 1:
