@@ -221,3 +221,22 @@ def test_siusd_outlier_price_handling():
     assert result.twap_price < Decimal(
         "10"
     ), f"TWAP price {result.twap_price} suggests corruption wasn't filtered"
+
+
+def test_fetch_pools_by_type():
+    try:
+        pools = Subgraph.fetch_pools_by_type("QUANT_AMM_WEIGHTED")
+
+        assert isinstance(pools, dict)
+        assert len(pools) > 0
+
+        for pool_ids in pools.values():
+            assert isinstance(pool_ids, list)
+            for pool_id in pool_ids:
+                assert isinstance(pool_id, str)
+
+    except Exception as e:
+        if "fetch_graphql_data" in str(e) or "Network" in str(e) or "url not found" in str(e):
+            pytest.skip(f"API or network issue: {e}")
+        else:
+            raise
