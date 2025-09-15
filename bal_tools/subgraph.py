@@ -660,11 +660,12 @@ class Subgraph:
             result = chain_subgraph.fetch_graphql_data(
                 "apiv3",
                 "get_core_pools_filters",
-                {"where": {"poolTypeIn": pool_types, "chainIn": [chain.upper()]}}
+                {"where": {"poolTypeIn": pool_types, "chainIn": [chain.upper()]}},
             ).get("poolGetPools", [])
 
             pool_ids = [
-                p["id"] for p in result
+                p["id"]
+                for p in result
                 if float(p.get("dynamicData", {}).get("totalLiquidity", 0)) > 1
             ]
 

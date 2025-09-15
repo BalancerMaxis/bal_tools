@@ -236,7 +236,11 @@ def test_fetch_pools_by_type():
                 assert isinstance(pool_id, str)
 
     except Exception as e:
-        if "fetch_graphql_data" in str(e) or "Network" in str(e) or "url not found" in str(e):
+        if (
+            "fetch_graphql_data" in str(e)
+            or "Network" in str(e)
+            or "url not found" in str(e)
+        ):
             pytest.skip(f"API or network issue: {e}")
         else:
             raise
