@@ -13,7 +13,7 @@ from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
 from web3 import Web3
 
-from .utils import get_abi, flatten_nested_dict, chain_ids_by_name, chain_names_prod
+from .utils import get_abi, flatten_nested_dict, chain_ids_by_name
 from .models import *
 from .errors import NoPricesFoundError
 from .ts_config_loader import ts_config_loader
@@ -645,31 +645,22 @@ class Subgraph:
         res = self.fetch_graphql_data("apiv3", "get_pool_tokens", params)
         return res["poolGetPool"]["protocolVersion"]
 
-    @classmethod
-    def fetch_pools_by_type(cls, pool_types: Union[str, List[str]]) -> dict:
+    def fetch_pools_by_type(self, pool_types: Union[str, List[str]]) -> List[str]:
         """
-        Fetch all pools of specific type(s) across ALL chains
+        Fetch all pools of specific type(s)
         """
         if isinstance(pool_types, str):
             pool_types = [pool_types]
 
-        all_pools = {}
-        for chain in chain_names_prod():
-            chain_subgraph = Subgraph(chain)
+        result = self.fetch_graphql_data(
+            "apiv3",
+            "get_core_pools_filters",
+            {"where": {"poolTypeIn": pool_types, "chainIn": [self.chain.upper()]}}
+        ).get("poolGetPools", [])
 
-            result = chain_subgraph.fetch_graphql_data(
-                "apiv3",
-                "get_core_pools_filters",
-                {"where": {"poolTypeIn": pool_types, "chainIn": [chain.upper()]}},
-            ).get("poolGetPools", [])
+        pool_ids = [
+            p["id"] for p in result
+            if float(p.get("dynamicData", {}).get("totalLiquidity", 0)) > 1
+        ]
 
-            pool_ids = [
-                p["id"]
-                for p in result
-                if float(p.get("dynamicData", {}).get("totalLiquidity", 0)) > 1
-            ]
-
-            if pool_ids:
-                all_pools[chain] = pool_ids
-
-        return all_pools
+        return pool_ids
