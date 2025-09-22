@@ -664,3 +664,24 @@ class Subgraph:
         }
         res = self.fetch_graphql_data("apiv3", "get_pool_tokens", params)
         return res["poolGetPool"]["protocolVersion"]
+
+    def fetch_pools_by_type(self, pool_types: Union[str, List[str]]) -> List[str]:
+        """
+        Fetch all pools of specific type(s)
+        """
+        if isinstance(pool_types, str):
+            pool_types = [pool_types]
+
+        result = self.fetch_graphql_data(
+            "apiv3",
+            "get_core_pools_filters",
+            {"where": {"poolTypeIn": pool_types, "chainIn": [self.chain.upper()]}},
+        ).get("poolGetPools", [])
+
+        pool_ids = [
+            p["id"]
+            for p in result
+            if float(p.get("dynamicData", {}).get("totalLiquidity", 0)) > 1
+        ]
+
+        return pool_ids
