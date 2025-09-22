@@ -1,8 +1,6 @@
 from setuptools import setup, find_packages
 
-from bal_tools._version import __version__ as VERSION
-
-
+VERSION = "0.1.21"
 DESCRIPTION = "Balancer Tools"
 LONG_DESCRIPTION = "Balancer Maxi helper and ecosystem tools"
 
