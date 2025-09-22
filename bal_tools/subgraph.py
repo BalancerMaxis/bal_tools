@@ -2,6 +2,7 @@ from urllib.request import urlopen
 from urllib.parse import urlparse
 import os
 import re
+import time
 from datetime import datetime, timezone, timedelta
 from decimal import Decimal
 from typing import Union, List, Callable, Dict
@@ -11,6 +12,7 @@ import numpy as np
 import pandas as pd
 from gql import Client, gql
 from gql.transport.requests import RequestsHTTPTransport
+from gql.transport.exceptions import TransportServerError
 from web3 import Web3
 
 from .utils import get_abi, flatten_nested_dict, chain_ids_by_name
@@ -18,6 +20,7 @@ from .models import *
 from .errors import NoPricesFoundError
 from .ts_config_loader import ts_config_loader
 from .etherscan import Etherscan
+from ._version import __version__ as VERSION
 
 
 def url_dict_from_df(df):
@@ -311,7 +314,7 @@ class Subgraph:
         query: str,
         params: dict = None,
         url: str = None,
-        retries: int = 2,
+        retries: int = 10,
     ):
         """
         query a subgraph using a locally saved query
@@ -319,6 +322,7 @@ class Subgraph:
         params:
         - query: the name of the query (file) to be executed
         - params: optional parameters to be passed to the query
+        - retries: number of retry attempts for failed requests (default: 10)
 
         returns:
         - result of the query
@@ -331,18 +335,8 @@ class Subgraph:
                     raise ValueError(
                         f"Subgraph url not found for {subgraph} on chain {self.chain}"
                     )
-        transport = RequestsHTTPTransport(
-            url=url or self.subgraph_url[subgraph],
-            retries=retries,
-            retry_backoff_factor=0.5,
-            retry_status_forcelist=[400, 429, 500, 502, 503, 504, 520],
-            headers={
-                "x-graphql-client-name": "Maxxis",
-                "x-graphql-client-version": "bal_tools/v0.1.15",
-            },
-        )
-        client = Client(transport=transport, fetch_schema_from_transport=False)
 
+        # prepare the query
         if "{" and "}" in query:
             # `query` is the actual query itself
             gql_query = gql(query)
@@ -350,9 +344,35 @@ class Subgraph:
             # `query` is the filename; load it from the graphql folder
             with open(f"{graphql_base_path}/{subgraph}/{query}.gql") as f:
                 gql_query = gql(f.read())
-        result = client.execute(gql_query, variable_values=params)
 
-        return result
+        # manual retry logic on top of transport retries
+        max_attempts = 3
+        for attempt in range(max_attempts):
+            try:
+                transport = RequestsHTTPTransport(
+                    url=url or self.subgraph_url[subgraph],
+                    retries=retries,
+                    retry_backoff_factor=2.0,
+                    retry_status_forcelist=[400, 429, 500, 502, 503, 504, 520],
+                    headers={
+                        "x-graphql-client-name": "Maxxis",
+                        "x-graphql-client-version": f"bal_tools/v{VERSION}",
+                    },
+                )
+                client = Client(transport=transport, fetch_schema_from_transport=False)
+                result = client.execute(gql_query, variable_values=params)
+                return result
+
+            except TransportServerError as e:
+                error_msg = str(e).lower()
+                if "503" in error_msg or "service unavailable" in error_msg:
+                    if attempt < max_attempts - 1:
+                        wait_time = 30 * (attempt + 1)  # 30s, 60s, 90s
+                        time.sleep(wait_time)
+                        continue
+                raise
+            except Exception:
+                raise
 
     def get_first_block_after_utc_timestamp(
         self, timestamp: int, use_etherscan: bool = True
