@@ -121,6 +121,8 @@ def test_find_all_subgraph_urls(
         pytest.skip(
             f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain} - V3 only chain"
         )
+    if subgraph_all_chains.chain == "plasma":
+        pytest.skip(f"no subgraphs exists on {subgraph_all_chains.chain} yet")
     if subgraph_type in [
         "vault-v3",
         "pools-v3",
@@ -201,8 +203,12 @@ def test_get_first_block_after_utc_timestamp_with_etherscan(
         assert isinstance(block, int)
         assert block > 0
     except Exception as e:
-        if "Unsupported chain" in str(e) or "Error fetching block" in str(e):
-            pytest.skip(f"Chain {chain} not supported by Etherscan V2")
+        if (
+            "Unsupported chain" in str(e)
+            or "Error fetching block" in str(e)
+            or "Subgraph url not found" in str(e)
+        ):
+            pytest.skip(f"Chain {chain} not fully supported: {str(e)}")
         else:
             raise
 
