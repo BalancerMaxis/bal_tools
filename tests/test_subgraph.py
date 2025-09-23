@@ -121,6 +121,8 @@ def test_find_all_subgraph_urls(
         pytest.skip(
             f"No {subgraph_type} subgraph exists on {subgraph_all_chains.chain} - V3 only chain"
         )
+    if subgraph_all_chains.chain == "plasma":
+        pytest.skip(f"no subgraphs exists on {subgraph_all_chains.chain} yet")
     if subgraph_type in [
         "vault-v3",
         "pools-v3",
