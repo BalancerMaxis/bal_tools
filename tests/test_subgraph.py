@@ -203,7 +203,11 @@ def test_get_first_block_after_utc_timestamp_with_etherscan(
         assert isinstance(block, int)
         assert block > 0
     except Exception as e:
-        if "Unsupported chain" in str(e) or "Error fetching block" in str(e) or "Subgraph url not found" in str(e):
+        if (
+            "Unsupported chain" in str(e)
+            or "Error fetching block" in str(e)
+            or "Subgraph url not found" in str(e)
+        ):
             pytest.skip(f"Chain {chain} not fully supported: {str(e)}")
         else:
             raise
