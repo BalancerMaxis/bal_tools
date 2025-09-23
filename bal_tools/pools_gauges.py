@@ -300,6 +300,7 @@ class BalPoolsGauges:
             "fraxtal": {},
             "hyperevm": {},
             "optimism": {},
+            "plasma": {},
         }
 
         # summarise extended core pools dict into core_pools dict

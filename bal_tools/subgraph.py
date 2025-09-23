@@ -59,6 +59,7 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "zkevm": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-zkevm/api",
     "fraxtal": "https://graph.data.aura.finance/subgraphs/name/aura-finance-fraxtal",
     "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
+    "plasma": None,  # placeholder
 }
 VAULT_V3_SUBGRAPHS_BY_CHAIN, VAULT_V3_SUBGRAPHS_BY_CHAIN_DEV = url_dict_from_df(
     vault_df
