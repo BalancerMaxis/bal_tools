@@ -294,13 +294,9 @@ def _to_json(obj: str) -> str:
     # 6c) Handle imported constants (like AaveV3Arbitrum) that appear in arrays or as values
     # Replace any remaining unquoted identifiers that would be invalid JSON
     # Match patterns like [AaveV3Arbitrum, AaveV3EthereumLido] or after commas in arrays
-    obj = re.sub(
-        r"(\[|,\s*)([A-Z][a-zA-Z0-9_]+)(?=\s*[\],}])", r'\1null', obj
-    )
+    obj = re.sub(r"(\[|,\s*)([A-Z][a-zA-Z0-9_]+)(?=\s*[\],}])", r"\1null", obj)
     # Also handle when they appear as object values (: AaveV3Arbitrum)
-    obj = re.sub(
-        r":\s*([A-Z][a-zA-Z0-9_]+)(?=\s*[,}])", r': null', obj
-    )
+    obj = re.sub(r":\s*([A-Z][a-zA-Z0-9_]+)(?=\s*[,}])", r": null", obj)
 
     # 7) Handle specific ternary expressions that are common in config files
     # Replace the rpcUrl ternary with the fallback value for simplicity
