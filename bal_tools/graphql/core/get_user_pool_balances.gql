@@ -1,6 +1,6 @@
 query GetUserPoolBalances($poolId: ID!, $block: Int) {
   pool(id: $poolId, block: { number: $block }) {
-    shares(where: { balance_gt: "0" }, orderBy: balance, orderDirection: desc) {
+    shares(first: 1000, where: { balance_gt: "0" }, orderBy: balance, orderDirection: desc) {
       userAddress {
         id
       }
