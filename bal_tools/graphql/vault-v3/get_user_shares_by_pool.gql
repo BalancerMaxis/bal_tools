@@ -1,5 +1,5 @@
 query UserSharesByPool($pool: String!, $block: Int) {
-  poolShares(where: { balance_gt: 0, pool: $pool }, block: { number: $block }) {
+  poolShares(first: 1000, where: { balance_gt: 0, pool: $pool }, block: { number: $block }) {
     user {
       id
     }

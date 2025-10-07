@@ -181,22 +181,30 @@ def _to_json(obj: str) -> str:
 
             array_start = i + 1
 
-            # Now find the end of the map function (similar to before)
-            map_start = match.end() - 1  # Position at the { after =>
+            # Now find the end of the map function
+            map_start = match.end() - 1  # Position at the { after => ({
             brace_count = 1
             j = map_start
 
-            while j < len(text) and brace_count > 0:
+            while j < len(text):
                 j += 1
                 if j < len(text):
                     if text[j] == "{":
                         brace_count += 1
                     elif text[j] == "}":
                         brace_count -= 1
-
-            # Skip the closing ))
-            while j < len(text) and text[j] in ")\n\r\t ":
-                j += 1
+                        if brace_count == 0:
+                            # Found matching }, now skip the closing )
+                            j += 1
+                            while j < len(text) and text[j] in " \n\r\t":
+                                j += 1
+                            if j < len(text) and text[j] == ")":
+                                j += 1  # Skip the ) from =>({...})
+                                while j < len(text) and text[j] in " \n\r\t":
+                                    j += 1
+                                if j < len(text) and text[j] == ")":
+                                    j += 1  # Skip the ) from .map(...)
+                            break
 
             # Replace the entire array.map expression with an empty array
             text = text[:array_start] + "[]" + text[j:]
@@ -283,6 +291,13 @@ def _to_json(obj: str) -> str:
         r":\s*([a-zA-Z_][a-zA-Z0-9_]*\.[a-zA-Z_][a-zA-Z0-9_]*),", r': "\1",', obj
     )
 
+    # 6c) Handle imported constants (like AaveV3Arbitrum) that appear in arrays or as values
+    # Replace any remaining unquoted identifiers that would be invalid JSON
+    # Match patterns like [AaveV3Arbitrum, AaveV3EthereumLido] or after commas in arrays
+    obj = re.sub(r"(\[|,\s*)([A-Z][a-zA-Z0-9_]+)(?=\s*[\],}])", r"\1null", obj)
+    # Also handle when they appear as object values (: AaveV3Arbitrum)
+    obj = re.sub(r":\s*([A-Z][a-zA-Z0-9_]+)(?=\s*[,}])", r": null", obj)
+
     # 7) Handle specific ternary expressions that are common in config files
     # Replace the rpcUrl ternary with the fallback value for simplicity
     obj = re.sub(
@@ -292,7 +307,12 @@ def _to_json(obj: str) -> str:
         flags=re.MULTILINE | re.DOTALL,
     )
 
-    # 8) remove trailing commas
+    # 8) Clean up any stray parentheses from map function conversions
+    # Only clean up )) that come immediately after } or ] without any other content
+    # This is now mostly handled by the improved map function handling above
+    # obj = re.sub(r"(\}|\])\)+", r"\1", obj)  # Commenting out as it can cause issues
+
+    # 9) remove trailing commas
     obj = re.sub(r",\s*(?=[}\]])", "", obj)
 
     return obj

@@ -1,5 +1,5 @@
 query GetOrderedPools($orderBy: Pool_orderBy) {
-  pools(orderBy: $orderBy) {
+  pools(first: 1000, orderBy: $orderBy) {
     address
   }
 }
