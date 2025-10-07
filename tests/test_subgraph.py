@@ -191,7 +191,7 @@ def test_get_first_block_after_utc_timestamp_with_etherscan(
     if not os.getenv("ETHERSCAN_API_KEY"):
         pytest.skip("ETHERSCAN_API_KEY not set")
 
-    if chain not in chains_prod or chain in ["fantom", "sonic"]:
+    if chain not in chains_prod or chain in ["fantom", "sonic", "mode"]:
         pytest.skip(f"Skipping {chain}")
 
     test_timestamp = int((datetime.now() - timedelta(days=1)).timestamp())
