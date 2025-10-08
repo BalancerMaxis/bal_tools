@@ -10,6 +10,9 @@ from .utils import chain_ids_by_name
 
 class Etherscan:
     BASE_URL = "https://api.etherscan.io/v2/api"
+    # can be removed if official support is added by etherscan or a dedicated blocks subgraph is added
+    # no api key needed
+    # https://github.com/BalancerMaxis/bal_tools/pull/137
     PLASMA_API_URL = (
         "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api"
     )
