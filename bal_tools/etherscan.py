@@ -10,7 +10,9 @@ from .utils import chain_ids_by_name
 
 class Etherscan:
     BASE_URL = "https://api.etherscan.io/v2/api"
-    PLASMA_API_URL = "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api"
+    PLASMA_API_URL = (
+        "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api"
+    )
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("ETHERSCAN_API_KEY")
