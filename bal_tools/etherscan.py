@@ -10,13 +10,15 @@ from .utils import chain_ids_by_name
 
 class Etherscan:
     BASE_URL = "https://api.etherscan.io/v2/api"
+    # can be removed if official support is added by etherscan or a dedicated blocks subgraph is added
+    # no api key needed
+    # https://github.com/BalancerMaxis/bal_tools/pull/137
+    PLASMA_API_URL = (
+        "https://api.routescan.io/v2/network/mainnet/evm/9745/etherscan/api"
+    )
 
     def __init__(self, api_key: Optional[str] = None):
         self.api_key = api_key or os.getenv("ETHERSCAN_API_KEY")
-        if not self.api_key:
-            raise ValueError(
-                "Etherscan API key required. Set ETHERSCAN_API_KEY environment variable or pass api_key parameter"
-            )
 
         self.session = requests.Session()
         retry_strategy = Retry(
@@ -63,9 +65,42 @@ class Etherscan:
 
         return data
 
+    def _get_block_by_timestamp_plasma(
+        self, timestamp: int, closest: str = "before"
+    ) -> Optional[int]:
+        params = {
+            "module": "block",
+            "action": "getblocknobytime",
+            "timestamp": timestamp,
+            "closest": closest,
+        }
+
+        try:
+            response = self.session.get(self.PLASMA_API_URL, params=params, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+
+            if data.get("status") == "1" and data.get("result"):
+                return int(data["result"])
+
+            return None
+
+        except Exception as e:
+            raise Exception(
+                f"Error fetching block for timestamp {timestamp} on plasma: {str(e)}"
+            )
+
     def get_block_by_timestamp(
         self, chain: str, timestamp: int, closest: str = "before"
     ) -> Optional[int]:
+        if chain == "plasma":
+            return self._get_block_by_timestamp_plasma(timestamp, closest)
+
+        if not self.api_key:
+            raise ValueError(
+                "Etherscan API key required for non-plasma chains. Set ETHERSCAN_API_KEY environment variable or pass api_key parameter"
+            )
+
         chain_id = self._get_chain_id(chain)
 
         params = {
