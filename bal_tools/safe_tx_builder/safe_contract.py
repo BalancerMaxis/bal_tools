@@ -67,13 +67,15 @@ class SafeContract:
                 formatted_array = []
                 for tuple_elem in value:
                     if isinstance(tuple_elem, (tuple, list)):
-                        formatted_array.append([self._format_tuple_element(e) for e in tuple_elem])
+                        formatted_array.append(
+                            [self._format_tuple_element(e) for e in tuple_elem]
+                        )
                     else:
                         formatted_array.append(tuple_elem)
-                return json.dumps(formatted_array, separators=(',', ':'))
+                return json.dumps(formatted_array, separators=(",", ":"))
             elif isinstance(value, (tuple, list)):
                 formatted_list = [self._format_tuple_element(elem) for elem in value]
-                return json.dumps(formatted_list, separators=(',', ':'))
+                return json.dumps(formatted_list, separators=(",", ":"))
 
         try:
             if isinstance(value, float):
@@ -129,6 +131,8 @@ class SafeContract:
                 )
 
             tx.contractMethod.inputs.append(input_template)
-            tx.contractInputsValues[input_type.name] = self._handle_type(arg, input_type)
+            tx.contractInputsValues[input_type.name] = self._handle_type(
+                arg, input_type
+            )
 
         self.tx_builder.base_payload.transactions.append(tx)

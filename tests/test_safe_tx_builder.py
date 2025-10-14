@@ -128,8 +128,8 @@ def test_tuple_type_preservation(reward_distributor_abi):
     claims_value = tx.contractInputsValues["_claims"]
 
     assert isinstance(claims_value, str)
-    assert claims_value.startswith('[')
-    assert not claims_value.startswith('(')
+    assert claims_value.startswith("[")
+    assert not claims_value.startswith("(")
 
     builder.output_payload("tests/payload_outputs/tuple_preservation_test.json")
 
@@ -162,14 +162,11 @@ def test_tuple_parameter_json_formatting(stakedao_marketv2_abi):
         1740686800,
         [],
         "0x0000000000000000000000000000000000000000",
-        False
+        False,
     )
 
     market.createCampaign(
-        campaign_params,
-        42161,
-        0,
-        "0xDD2FaD5606cD8ec0c3b93Eb4F9849572b598F4c7"
+        campaign_params, 42161, 0, "0xDD2FaD5606cD8ec0c3b93Eb4F9849572b598F4c7"
     )
 
     payload = builder.base_payload
@@ -183,8 +180,8 @@ def test_tuple_parameter_json_formatting(stakedao_marketv2_abi):
     params_value = tx.contractInputsValues["params"]
 
     assert isinstance(params_value, str)
-    assert params_value.startswith('[')
-    assert not params_value.startswith('(')
+    assert params_value.startswith("[")
+    assert not params_value.startswith("(")
 
     parsed_params = json.loads(params_value)
 
