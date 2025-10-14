@@ -89,6 +89,12 @@ def reward_distributor_abi():
 
 
 @pytest.fixture(scope="module")
+def stakedao_marketv2_abi():
+    with open("tests/abi/stakedao_marketv2.json", "r") as file:
+        return json.load(file)
+
+
+@pytest.fixture(scope="module")
 def pool_snapshot_blocks():
     return {
         "arbitrum": 200000000,

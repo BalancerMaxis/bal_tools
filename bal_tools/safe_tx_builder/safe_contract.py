@@ -51,7 +51,32 @@ class SafeContract:
 
         return parse_json_abi(abi)
 
-    def _handle_type(self, value):
+    def _format_tuple_element(self, elem):
+        if isinstance(elem, bool):
+            return elem
+        elif isinstance(elem, (int, float)):
+            return str(int(elem) if isinstance(elem, float) else elem)
+        elif isinstance(elem, (list, tuple)):
+            return list(elem)
+        else:
+            return str(elem)
+
+    def _handle_type(self, value, input_type=None):
+        if input_type and input_type.type.startswith("tuple"):
+            if input_type.type == "tuple[]" and isinstance(value, (tuple, list)):
+                formatted_array = []
+                for tuple_elem in value:
+                    if isinstance(tuple_elem, (tuple, list)):
+                        formatted_array.append(
+                            [self._format_tuple_element(e) for e in tuple_elem]
+                        )
+                    else:
+                        formatted_array.append(tuple_elem)
+                return json.dumps(formatted_array, separators=(",", ":"))
+            elif isinstance(value, (tuple, list)):
+                formatted_list = [self._format_tuple_element(elem) for elem in value]
+                return json.dumps(formatted_list, separators=(",", ":"))
+
         try:
             if isinstance(value, float):
                 value = int(value)
@@ -106,6 +131,8 @@ class SafeContract:
                 )
 
             tx.contractMethod.inputs.append(input_template)
-            tx.contractInputsValues[input_type.name] = self._handle_type(arg)
+            tx.contractInputsValues[input_type.name] = self._handle_type(
+                arg, input_type
+            )
 
         self.tx_builder.base_payload.transactions.append(tx)
