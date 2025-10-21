@@ -59,7 +59,9 @@ class Web3RpcByChain:
 class Web3Rpc:
     def __init__(self, chain, DRPC_KEY):
         drpc_chain = DRPC_NAME_OVERRIDES.get(chain, chain)
-        endpoint_uri = f"https://lb.drpc.live/ogrpc?network={drpc_chain}&dkey={DRPC_KEY}"
+        endpoint_uri = (
+            f"https://lb.drpc.live/ogrpc?network={drpc_chain}&dkey={DRPC_KEY}"
+        )
         try:
             self.w3 = Web3(
                 Web3.HTTPProvider(endpoint_uri=endpoint_uri, session=DRPC_SESSION)
