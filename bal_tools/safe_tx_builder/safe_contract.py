@@ -78,6 +78,9 @@ class SafeContract:
                 return json.dumps(formatted_list, separators=(",", ":"))
 
         try:
+            # Keep lists/arrays as-is for proper JSON serialization
+            if isinstance(value, (list, tuple)):
+                return value
             if isinstance(value, float):
                 value = int(value)
             return str(value)
