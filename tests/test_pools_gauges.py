@@ -5,9 +5,9 @@ from bal_tools.models import CorePools
 
 
 EXAMPLE_PREFERENTIAL_GAUGES = {
-    "mainnet": (  # wsteTH-WETH
-        "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c2",
-        "0x5C0F23A5c1be65Fa710d385814a7Fd1Bda480b1C",
+    "mainnet": (  # 80RDNT-20wETH
+        "0xcf7b51ce5755513d4be016b0e28d6edeffa1d52a000200000000000000000617",
+        "0xF22BbdAd6B3Dd9314BdF97724DF32b09Ff95C216",
     ),
     "gnosis": (  # wstETH-GNO
         "0x4683e340a8049261057d5ab1b29c8d840e75695e00020000000000000000005a",
@@ -19,8 +19,8 @@ EXAMPLE_PREFERENTIAL_GAUGES = {
     ),
 }
 EXAMPLE_CORE_POOLS = {
-    "mainnet": (  # wsteTH-WETH
-        "0x93d199263632a4ef4bb438f1feb99e57b4b5f0bd0000000000000000000005c2"
+    "mainnet": (  # 80RDNT-20wETH
+        "0xcf7b51ce5755513d4be016b0e28d6edeffa1d52a000200000000000000000617"
     ),
     "polygon": (  # maticX-WMATIC-BPT
         "0xcd78a20c597e367a4e478a2411ceb790604d7c8f000000000000000000000c22"
