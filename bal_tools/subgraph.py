@@ -405,7 +405,7 @@ class Subgraph:
                             )
                         else:
                             if "NOTOK" in str(e) or "temporarily unavailable" in str(e):
-                                time.sleep(2 ** attempt)
+                                time.sleep(2**attempt)
                                 continue
                             warnings.warn(
                                 f"Etherscan V2 block fetch failed for chain {self.chain}: {str(e)}. Falling back to subgraph.",
@@ -425,7 +425,7 @@ class Subgraph:
 
             except Exception as e:
                 if "bad indexers" in str(e) and attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)
+                    time.sleep(2**attempt)
                     continue
 
                 if attempt == max_retries - 1:
