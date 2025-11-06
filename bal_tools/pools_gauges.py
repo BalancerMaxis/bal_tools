@@ -368,7 +368,7 @@ class BalPoolsGauges:
             if pool["dynamicData"]["isInRecoveryMode"]:
                 # pools in recovery mode are not core pools
                 continue
-            if pool["poolCreator"] != ZERO_ADDRESS:
+            if pool["poolCreator"] and pool["poolCreator"] != ZERO_ADDRESS:
                 # balancer dao is not explicitly set as fees manager
                 if pool["type"] not in [
                     "COMPOSABLE_STABLE",
