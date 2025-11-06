@@ -90,6 +90,27 @@ class Etherscan:
                 f"Error fetching block for timestamp {timestamp} on plasma: {str(e)}"
             )
 
+    def _get_block_by_timestamp_routescan(
+        self, chain_id: int, timestamp: int, closest: str = "before"
+    ) -> Optional[int]:
+        routescan_url = (
+            f"https://api.routescan.io/v2/network/mainnet/evm/{chain_id}/etherscan/api"
+        )
+        params = {
+            "module": "block",
+            "action": "getblocknobytime",
+            "timestamp": timestamp,
+            "closest": closest,
+        }
+        response = self.session.get(routescan_url, params=params, timeout=30)
+        response.raise_for_status()
+        data = response.json()
+
+        if data.get("status") == "1" and data.get("result"):
+            return int(data["result"])
+
+        return None
+
     def get_block_by_timestamp(
         self, chain: str, timestamp: int, closest: str = "before"
     ) -> Optional[int]:
@@ -119,7 +140,14 @@ class Etherscan:
 
             return None
 
-        except Exception as e:
-            raise Exception(
-                f"Error fetching block for timestamp {timestamp} on {chain}: {str(e)}"
-            )
+        except Exception as etherscan_error:
+            # if etherscan fails, try routescan as fallback
+            try:
+                return self._get_block_by_timestamp_routescan(
+                    chain_id, timestamp, closest
+                )
+            except Exception:
+                # if routescan also fails, raise the original etherscan error
+                raise Exception(
+                    f"Error fetching block for timestamp {timestamp} on {chain}: {str(etherscan_error)}"
+                )
