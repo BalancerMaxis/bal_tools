@@ -381,61 +381,39 @@ class Subgraph:
         if timestamp > int(datetime.now().strftime("%s")):
             timestamp = int(datetime.now().strftime("%s")) - 2000
 
-        max_retries = 3
-
-        for attempt in range(max_retries):
+        if use_etherscan:
             try:
-                if use_etherscan:
-                    try:
-                        if not self.etherscan_client:
-                            self.etherscan_client = Etherscan()
+                if not self.etherscan_client:
+                    self.etherscan_client = Etherscan()
 
-                        block_number = self.etherscan_client.get_block_by_timestamp(
-                            chain=self.chain, timestamp=timestamp, closest="after"
-                        )
-
-                        if block_number:
-                            return block_number
-
-                    except Exception as e:
-                        if attempt == max_retries - 1:
-                            warnings.warn(
-                                f"Etherscan V2 block fetch failed for chain {self.chain}: {str(e)}. Falling back to subgraph.",
-                                UserWarning,
-                            )
-                        else:
-                            if "NOTOK" in str(e) or "temporarily unavailable" in str(e):
-                                time.sleep(2**attempt)
-                                continue
-                            warnings.warn(
-                                f"Etherscan V2 block fetch failed for chain {self.chain}: {str(e)}. Falling back to subgraph.",
-                                UserWarning,
-                            )
-
-                data = self.fetch_graphql_data(
-                    "blocks",
-                    "first_block_after_ts",
-                    {
-                        "timestamp_gt": int(timestamp) - 200,
-                        "timestamp_lt": int(timestamp) + 200,
-                    },
+                block_number = self.etherscan_client.get_block_by_timestamp(
+                    chain=self.chain, timestamp=timestamp, closest="after"
                 )
-                data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
-                return int(data["blocks"][0]["number"])
+
+                if block_number:
+                    return block_number
 
             except Exception as e:
-                if "bad indexers" in str(e) and attempt < max_retries - 1:
-                    time.sleep(2**attempt)
-                    continue
+                warnings.warn(
+                    f"Etherscan V2 block fetch failed for chain {self.chain}: {str(e)}. Falling back to subgraph.",
+                    UserWarning,
+                )
 
-                if attempt == max_retries - 1:
-                    raise Exception(
-                        f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}"
-                    )
-
-        raise Exception(
-            f"Failed to fetch block for timestamp {timestamp} on {self.chain} after {max_retries} attempts"
-        )
+        try:
+            data = self.fetch_graphql_data(
+                "blocks",
+                "first_block_after_ts",
+                {
+                    "timestamp_gt": int(timestamp) - 200,
+                    "timestamp_lt": int(timestamp) + 200,
+                },
+            )
+            data["blocks"].sort(key=lambda x: x["timestamp"], reverse=True)
+            return int(data["blocks"][0]["number"])
+        except Exception as e:
+            raise Exception(
+                f"Failed to fetch block for timestamp {timestamp} on {self.chain}: {str(e)}"
+            )
 
     def filter_outliers_and_average(
         self, prices: List[Decimal], iqr_multiplier: float = 100_000.0
