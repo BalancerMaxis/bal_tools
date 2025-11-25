@@ -323,7 +323,8 @@ def _to_json(obj: str) -> str:
     obj = handle_ternary(obj)
 
     # 6e) Handle environment variable references like env.PAXOS_APR_KEY
-    obj = re.sub(r"\benv\.[A-Z_][A-Z0-9_]*\b", "null", obj)
+    # BUT preserve ${env.VAR} template interpolations - these are handled by get_subgraph_url_from_backend_config
+    obj = re.sub(r"(?<!\$\{)(?<!\{)\benv\.[A-Z_][A-Z0-9_]*\b", "null", obj)
 
     # 8) Clean up any stray parentheses from map function conversions
     # Only clean up )) that come immediately after } or ] without any other content
