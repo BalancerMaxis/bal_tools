@@ -298,14 +298,32 @@ def _to_json(obj: str) -> str:
     # Also handle when they appear as object values (: AaveV3Arbitrum)
     obj = re.sub(r":\s*([A-Z][a-zA-Z0-9_]+)(?=\s*[,}])", r": null", obj)
 
-    # 7) Handle specific ternary expressions that are common in config files
-    # Replace the rpcUrl ternary with the fallback value for simplicity
-    obj = re.sub(
-        r'"rpcUrl":\s*env\.DRPC_API_KEY\s*\?\s*"[^"]+"\s*:\s*([^,]+),',
-        r'"rpcUrl": \1,',
-        obj,
-        flags=re.MULTILINE | re.DOTALL,
-    )
+    # 6d) Handle ternary expressions (e.g. env.VAR ? "url1" : "url2")
+    # This must happen BEFORE env.* replacement to properly extract the else branch
+    # Pattern matches: condition ? "then_value" : else_value
+    def handle_ternary(text):
+        # Handle multi-line ternaries like:
+        #   "key": env.VAR
+        #       ? `string`
+        #       : 'string',
+        pattern = r'("[\w]+":\s*)[a-zA-Z_.]+\s*\?\s*(?:`[^`]*`|"[^"]*"|\'[^\']*\')\s*:\s*(`[^`]*`|"[^"]*"|\'[^\']*\')'
+        match = re.search(pattern, text, flags=re.DOTALL)
+        while match:
+            key_part = match.group(1)  # e.g. '"rpcUrl": '
+            else_value = match.group(2)  # the else branch value
+            # Convert backticks/single quotes to double quotes for the else value
+            if else_value.startswith("`"):
+                else_value = '"' + else_value[1:-1] + '"'
+            elif else_value.startswith("'"):
+                else_value = '"' + else_value[1:-1] + '"'
+            text = text[: match.start()] + key_part + else_value + text[match.end() :]
+            match = re.search(pattern, text, flags=re.DOTALL)
+        return text
+
+    obj = handle_ternary(obj)
+
+    # 6e) Handle environment variable references like env.PAXOS_APR_KEY
+    obj = re.sub(r"\benv\.[A-Z_][A-Z0-9_]*\b", "null", obj)
 
     # 8) Clean up any stray parentheses from map function conversions
     # Only clean up )) that come immediately after } or ] without any other content
