@@ -243,9 +243,7 @@ class HiddenHand:
         resp.raise_for_status()
         proposals = resp.json().get("data", {}).get("proposals", [])
         gauge_proposals = [
-            p
-            for p in proposals
-            if "Gauge Weight for Week of " in p.get("title", "")
+            p for p in proposals if "Gauge Weight for Week of " in p.get("title", "")
         ][:n_rounds]
 
         if not gauge_proposals:
