@@ -1,5 +1,8 @@
 from collections import defaultdict
+import math
 import re
+import statistics
+from decimal import Decimal
 from typing import Dict, List
 from .errors import (
     UnexpectedListLengthError,
@@ -193,6 +196,7 @@ class Snapshot:
 
 class HiddenHand:
     AURA_URL = "https://api.hiddenhand.finance/proposal/aura"
+    SNAPSHOT_URL = "https://hub.snapshot.org/graphql"
 
     def fetch_aura_bribs(self) -> List[PropData]:
         """
@@ -206,3 +210,67 @@ class HiddenHand:
         if res_parsed["error"]:
             raise ValueError("HH API returned error")
         return [PropData(**prop_data) for prop_data in res_parsed["data"]]
+
+    def get_min_aura_incentive(
+        self, n_rounds: int = 4, buffer_pct: float = 0.25
+    ) -> Decimal:
+        """
+        Calculate dynamic min_aura_incentive from Snapshot votes and Hidden Hand CPV.
+
+        Formula: ceil(max_votes * 0.005 * (1 + buffer_pct) * median_cpv / 10) * 10
+
+        params:
+        - n_rounds: number of recent gauge weight proposals to consider (default: 4)
+        - buffer_pct: buffer percentage to add to the threshold (default: 0.25 = 25%)
+
+        returns:
+        - Decimal threshold value in USD
+        """
+        first = n_rounds * 2
+        query = f"""{{
+            proposals(
+                first: {first},
+                where: {{space: "gauges.aurafinance.eth"}},
+                orderBy: "created",
+                orderDirection: desc
+            ) {{
+                title
+                scores_total
+            }}
+        }}"""
+
+        resp = requests.post(self.SNAPSHOT_URL, json={"query": query}, timeout=10)
+        resp.raise_for_status()
+        proposals = resp.json().get("data", {}).get("proposals", [])
+        gauge_proposals = [
+            p
+            for p in proposals
+            if "Gauge Weight for Week of " in p.get("title", "")
+        ][:n_rounds]
+
+        if not gauge_proposals:
+            raise ValueError("No gauge weight proposals found in Snapshot")
+
+        max_votes = max(p["scores_total"] for p in gauge_proposals)
+
+        resp = requests.get(self.AURA_URL, timeout=10)
+        resp.raise_for_status()
+        cpv_values = [
+            p["valuePerVote"]
+            for p in resp.json().get("data", [])
+            if p.get("valuePerVote", 0) > 0
+        ]
+
+        if not cpv_values:
+            raise ValueError("No valid CPV data found in Hidden Hand")
+
+        median_cpv = statistics.median(cpv_values)
+        buffer_multiplier = Decimal(str(1 + buffer_pct))
+
+        raw = (
+            Decimal(str(max_votes))
+            * Decimal("0.005")
+            * buffer_multiplier
+            * Decimal(str(median_cpv))
+        )
+        return Decimal(math.ceil(float(raw) / 10)) * 10
