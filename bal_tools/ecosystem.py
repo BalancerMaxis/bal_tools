@@ -209,20 +209,24 @@ class HiddenHand:
         return [PropData(**prop_data) for prop_data in res_parsed["data"]]
 
     def _get_previous_round_timestamps(self, n_rounds: int) -> List[int]:
-        """Round endings are every Monday 8PM GMT."""
+        """Round endings are every other Monday 8PM GMT."""
         now = datetime.now(timezone.utc)
         last_monday_8pm = (now - timedelta(days=now.weekday())).replace(
             hour=20, minute=0, second=0, microsecond=0
         )
         if last_monday_8pm > now:
             last_monday_8pm -= timedelta(weeks=1)
+        ts = int(last_monday_8pm.timestamp())
+        resp = requests.get(f"{self.AURA_URL}/{ts}", timeout=10)
+        if not any(p.get("valuePerVote", 0) > 0 for p in resp.json().get("data", [])):
+            last_monday_8pm -= timedelta(weeks=1)
         return [
-            int((last_monday_8pm - timedelta(weeks=i)).timestamp())
+            int((last_monday_8pm - timedelta(weeks=i * 2)).timestamp())
             for i in range(n_rounds)
         ]
 
     def get_min_aura_incentive(
-        self, n_rounds: int = 4, buffer_pct: float = 0.25
+        self, n_rounds: int = 2, buffer_pct: float = 0.25
     ) -> Decimal:
         """
         Calculate dynamic min_aura_incentive from Snapshot votes and Hidden Hand CPV.
