@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 import math
 import re
 import statistics
@@ -199,33 +200,41 @@ class HiddenHand:
     SNAPSHOT_URL = "https://hub.snapshot.org/graphql"
 
     def fetch_aura_bribs(self) -> List[PropData]:
-        """
-        Fetch GET bribes from hidden hand api
-        """
         res = requests.get(self.AURA_URL)
         if not res.ok:
             raise ValueError("Error fetching bribes from hidden hand api")
-
         res_parsed = res.json()
         if res_parsed["error"]:
             raise ValueError("HH API returned error")
         return [PropData(**prop_data) for prop_data in res_parsed["data"]]
 
+    def _get_previous_round_timestamps(self, n_rounds: int) -> List[int]:
+        """Round endings are every other Monday 8PM GMT."""
+        now = datetime.now(timezone.utc)
+        last_monday_8pm = (now - timedelta(days=now.weekday())).replace(
+            hour=20, minute=0, second=0, microsecond=0
+        )
+        if last_monday_8pm > now:
+            last_monday_8pm -= timedelta(weeks=1)
+        ts = int(last_monday_8pm.timestamp())
+        resp = requests.get(f"{self.AURA_URL}/{ts}", timeout=10)
+        if not any(p.get("valuePerVote", 0) > 0 for p in resp.json().get("data", [])):
+            last_monday_8pm -= timedelta(weeks=1)
+        return [
+            int((last_monday_8pm - timedelta(weeks=i * 2)).timestamp())
+            for i in range(n_rounds)
+        ]
+
     def get_min_aura_incentive(
-        self, n_rounds: int = 4, buffer_pct: float = 0.25
+        self, n_rounds: int = 2, buffer_pct: float = 0.25
     ) -> Decimal:
         """
         Calculate dynamic min_aura_incentive from Snapshot votes and Hidden Hand CPV.
 
         Formula: ceil(max_votes * 0.005 * (1 + buffer_pct) * median_cpv / 10) * 10
-
-        params:
-        - n_rounds: number of recent gauge weight proposals to consider (default: 4)
-        - buffer_pct: buffer percentage to add to the threshold (default: 0.25 = 25%)
-
-        returns:
-        - Decimal threshold value in USD
         """
+        timestamps = self._get_previous_round_timestamps(n_rounds)
+
         first = n_rounds * 2
         query = f"""{{
             proposals(
@@ -238,7 +247,6 @@ class HiddenHand:
                 scores_total
             }}
         }}"""
-
         resp = requests.post(self.SNAPSHOT_URL, json={"query": query}, timeout=10)
         resp.raise_for_status()
         proposals = resp.json().get("data", {}).get("proposals", [])
@@ -251,13 +259,13 @@ class HiddenHand:
 
         max_votes = max(p["scores_total"] for p in gauge_proposals)
 
-        resp = requests.get(self.AURA_URL, timeout=10)
-        resp.raise_for_status()
-        cpv_values = [
-            p["valuePerVote"]
-            for p in resp.json().get("data", [])
-            if p.get("valuePerVote", 0) > 0
-        ]
+        cpv_values = []
+        for ts in timestamps:
+            resp = requests.get(f"{self.AURA_URL}/{ts}", timeout=10)
+            resp.raise_for_status()
+            for p in resp.json().get("data", []):
+                if p.get("valuePerVote", 0) > 0:
+                    cpv_values.append(p["valuePerVote"])
 
         if not cpv_values:
             raise ValueError("No valid CPV data found in Hidden Hand")
