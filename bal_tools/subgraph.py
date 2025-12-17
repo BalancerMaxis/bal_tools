@@ -49,17 +49,18 @@ vault_df, pools_df = pd.read_html(
     flavor="lxml",
 )
 
+AURA_SUBGRAPH_URI = "https://api.subgraph.ormilabs.com/api/public/396b336b-4ed7-469f-a8f4-468e1e26e9a8/subgraphs"
 AURA_SUBGRAPHS_BY_CHAIN = {
-    "mainnet": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-mainnet/api",
-    "arbitrum": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-arbitrum/api",
-    "optimism": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-optimism/api",
-    "gnosis": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-gnosis/api",
-    "base": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-base/api",
-    "polygon": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-polygon/api",
-    "zkevm": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-zkevm/api",
-    "fraxtal": "https://graph.data.aura.finance/subgraphs/name/aura-finance-fraxtal",
-    "avalanche": "https://subgraph.satsuma-prod.com/cae76ab408ca/1xhub-ltd/aura-finance-avalanche/api",
-    "plasma": None,  # placeholder
+    "mainnet": f"{AURA_SUBGRAPH_URI}/aura-finance-mainnet/v0.0.1/",
+    "arbitrum": f"{AURA_SUBGRAPH_URI}/aura-finance-arbitrum/v0.0.1/",
+    "optimism": f"{AURA_SUBGRAPH_URI}/aura-finance-optimism/v0.0.1/",
+    "gnosis": f"{AURA_SUBGRAPH_URI}/aura-finance-gnosis/v0.0.3/",
+    "base": f"{AURA_SUBGRAPH_URI}/aura-finance-base/v0.0.1/",
+    "polygon": f"{AURA_SUBGRAPH_URI}/aura-finance-polygon/v0.0.1/",
+    "zkevm": "https://api.studio.thegraph.com/query/77603/aura-finance-zkevm/v0.0.1/",
+    "fraxtal": None,
+    "avalanche": f"{AURA_SUBGRAPH_URI}/aura-finance-avalanche/v0.0.1/",
+    "plasma": None,
 }
 VAULT_V3_SUBGRAPHS_BY_CHAIN, VAULT_V3_SUBGRAPHS_BY_CHAIN_DEV = url_dict_from_df(
     vault_df
