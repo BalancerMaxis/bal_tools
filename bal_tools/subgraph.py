@@ -54,7 +54,7 @@ AURA_SUBGRAPHS_BY_CHAIN = {
     "mainnet": f"{AURA_SUBGRAPH_URI}/aura-finance-mainnet/v0.0.1/",
     "arbitrum": f"{AURA_SUBGRAPH_URI}/aura-finance-arbitrum/v0.0.1/",
     "optimism": f"{AURA_SUBGRAPH_URI}/aura-finance-optimism/v0.0.1/",
-    "gnosis": "https://graph.data.aura.finance/subgraphs/name/aura-finance-gnosis",
+    "gnosis": f"{AURA_SUBGRAPH_URI}/aura-finance-gnosis/v0.0.3/",
     "base": f"{AURA_SUBGRAPH_URI}/aura-finance-base/v0.0.1/",
     "polygon": f"{AURA_SUBGRAPH_URI}/aura-finance-polygon/v0.0.1/",
     "zkevm": "https://api.studio.thegraph.com/query/77603/aura-finance-zkevm/v0.0.1/",
