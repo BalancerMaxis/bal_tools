@@ -19,9 +19,5 @@ query PoolsSnapshots($first: Int, $skip: Int, $block: Int) {
       }
     }
     timestamp
-    protocolFee
-    swapFees
-    swapVolume
-    liquidity
   }
 }
