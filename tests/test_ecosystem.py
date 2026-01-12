@@ -7,4 +7,3 @@ def test_calculate_dynamic_min_incentive():
 
     assert isinstance(result, int)
     assert result > 0
-

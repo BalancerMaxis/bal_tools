@@ -237,5 +237,7 @@ class StakeDAO:
     ) -> int:
         max_votes = self.get_aura_max_votes_from_snapshot(n_rounds)
         avg_cpv = self.get_cpv_from_analytics(n_rounds)
-        min_incentive = math.ceil(max_votes * 0.001 * (1 + buffer_pct) * avg_cpv / 10) * 10
+        min_incentive = (
+            math.ceil(max_votes * 0.001 * (1 + buffer_pct) * avg_cpv / 10) * 10
+        )
         return int(min_incentive)
