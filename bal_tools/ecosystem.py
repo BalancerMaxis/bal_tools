@@ -1,10 +1,9 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
 import math
+import os
 import re
 import statistics
-from decimal import Decimal
-from typing import Dict, List
+from typing import Dict
 from .errors import (
     UnexpectedListLengthError,
     MultipleMatchesError,
@@ -13,6 +12,7 @@ from .errors import (
 from web3 import Web3
 import requests
 from .subgraph import Subgraph
+from .drpc import Web3RpcByChain
 from .utils import to_checksum_address
 
 
@@ -237,7 +237,12 @@ class StakeDAO:
     ) -> int:
         max_votes = self.get_aura_max_votes_from_snapshot(n_rounds)
         avg_cpv = self.get_cpv_from_analytics(n_rounds)
-        min_incentive = (
-            math.ceil(max_votes * 0.001 * (1 + buffer_pct) * avg_cpv / 10) * 10
+
+        web3 = Web3RpcByChain(os.getenv("DRPC_KEY"))["mainnet"]
+        aura_vebal_share = float(
+            self.subgraph.calculate_aura_vebal_share(web3, web3.eth.block_number)
         )
-        return int(min_incentive)
+
+        min_aura_portion = max_votes * 0.001 * (1 + buffer_pct) * avg_cpv
+        min_total_bribe = min_aura_portion / aura_vebal_share
+        return int(math.ceil(min_total_bribe / 10) * 10)
