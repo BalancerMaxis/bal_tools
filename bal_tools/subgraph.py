@@ -49,6 +49,7 @@ vault_df, pools_df = pd.read_html(
     flavor="lxml",
 )
 
+SNAPSHOT_URL = "https://hub.snapshot.org/graphql"
 AURA_SUBGRAPH_URI = "https://api.subgraph.ormilabs.com/api/public/396b336b-4ed7-469f-a8f4-468e1e26e9a8/subgraphs"
 AURA_SUBGRAPHS_BY_CHAIN = {
     "mainnet": f"{AURA_SUBGRAPH_URI}/aura-finance-mainnet/v0.0.1/",
@@ -103,6 +104,8 @@ class Subgraph:
         - https url of the subgraph
         """
         # before anything else, try to get the url from the latest backend config
+        if subgraph == "snapshot":
+            return SNAPSHOT_URL
         if subgraph == "aura":
             return AURA_SUBGRAPHS_BY_CHAIN.get(self.chain, None)
         url = self.get_subgraph_url_from_backend_config(subgraph)

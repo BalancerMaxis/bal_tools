@@ -1,10 +1,9 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
 import math
+import os
 import re
 import statistics
-from decimal import Decimal
-from typing import Dict, List
+from typing import Dict
 from .errors import (
     UnexpectedListLengthError,
     MultipleMatchesError,
@@ -13,8 +12,8 @@ from .errors import (
 from web3 import Web3
 import requests
 from .subgraph import Subgraph
+from .drpc import Web3RpcByChain
 from .utils import to_checksum_address
-from .models import PropData
 
 
 AURA_L2_DEFAULT_GAUGE_STAKER = to_checksum_address(
@@ -195,88 +194,55 @@ class Snapshot:
             return votes
 
 
-class HiddenHand:
-    AURA_URL = "https://api.hiddenhand.finance/proposal/aura"
-    SNAPSHOT_URL = "https://hub.snapshot.org/graphql"
+class StakeDAO:
+    ANALYTICS_BASE_URL = "https://raw.githubusercontent.com/stake-dao/votemarket-analytics/refs/heads/main/analytics/votemarket-analytics/balancer"
 
-    def fetch_aura_bribs(self) -> List[PropData]:
-        res = requests.get(self.AURA_URL)
-        if not res.ok:
-            raise ValueError("Error fetching bribes from hidden hand api")
-        res_parsed = res.json()
-        if res_parsed["error"]:
-            raise ValueError("HH API returned error")
-        return [PropData(**prop_data) for prop_data in res_parsed["data"]]
+    def __init__(self):
+        self.subgraph = Subgraph()
 
-    def _get_previous_round_timestamps(self, n_rounds: int) -> List[int]:
-        """Round endings are every other Monday 8PM GMT."""
-        now = datetime.now(timezone.utc)
-        last_monday_8pm = (now - timedelta(days=now.weekday())).replace(
-            hour=20, minute=0, second=0, microsecond=0
+    def get_aura_max_votes_from_snapshot(self, n_rounds: int = 2) -> int:
+        data = self.subgraph.fetch_graphql_data(
+            subgraph="snapshot",
+            query="get_aura_gauge_proposals",
+            params={"space": "gauges.aurafinance.eth", "first": n_rounds},
         )
-        if last_monday_8pm > now:
-            last_monday_8pm -= timedelta(weeks=1)
-        ts = int(last_monday_8pm.timestamp())
-        resp = requests.get(f"{self.AURA_URL}/{ts}", timeout=10)
-        if not any(p.get("valuePerVote", 0) > 0 for p in resp.json().get("data", [])):
-            last_monday_8pm -= timedelta(weeks=1)
-        return [
-            int((last_monday_8pm - timedelta(weeks=i * 2)).timestamp())
-            for i in range(n_rounds)
-        ]
+        proposals = data.get("proposals", [])
+        if not proposals:
+            raise ValueError("No Aura gauge weight proposals found on Snapshot")
+        return int(max(p["scores_total"] for p in proposals if p.get("scores_total")))
 
-    def get_min_aura_incentive(
-        self, n_rounds: int = 2, buffer_pct: float = 0.25
-    ) -> Decimal:
-        """
-        Calculate dynamic min_aura_incentive from Snapshot votes and Hidden Hand CPV.
+    def get_cpv_from_analytics(self, n_rounds: int = 2) -> float:
+        metadata_url = f"{self.ANALYTICS_BASE_URL}/rounds-metadata.json"
+        response = requests.get(metadata_url, timeout=30)
+        response.raise_for_status()
+        rounds = response.json()
 
-        Formula: ceil(max_votes * 0.005 * (1 + buffer_pct) * median_cpv / 10) * 10
-        """
-        timestamps = self._get_previous_round_timestamps(n_rounds)
-
-        first = n_rounds * 2
-        query = f"""{{
-            proposals(
-                first: {first},
-                where: {{space: "gauges.aurafinance.eth"}},
-                orderBy: "created",
-                orderDirection: desc
-            ) {{
-                title
-                scores_total
-            }}
-        }}"""
-        resp = requests.post(self.SNAPSHOT_URL, json={"query": query}, timeout=10)
-        resp.raise_for_status()
-        proposals = resp.json().get("data", {}).get("proposals", [])
-        gauge_proposals = [
-            p for p in proposals if "Gauge Weight for Week of " in p.get("title", "")
-        ][:n_rounds]
-
-        if not gauge_proposals:
-            raise ValueError("No gauge weight proposals found in Snapshot")
-
-        max_votes = max(p["scores_total"] for p in gauge_proposals)
-
+        latest_rounds = sorted(rounds, key=lambda x: x["id"], reverse=True)[:n_rounds]
         cpv_values = []
-        for ts in timestamps:
-            resp = requests.get(f"{self.AURA_URL}/{ts}", timeout=10)
-            resp.raise_for_status()
-            for p in resp.json().get("data", []):
-                if p.get("valuePerVote", 0) > 0:
-                    cpv_values.append(p["valuePerVote"])
+        for round_info in latest_rounds:
+            round_url = f"{self.ANALYTICS_BASE_URL}/{round_info['id']}.json"
+            response = requests.get(round_url, timeout=30)
+            response.raise_for_status()
+            data = response.json()
+            cpv = data.get("globalAverageDollarPerVote")
+            if cpv and cpv > 0:
+                cpv_values.append(float(cpv))
 
         if not cpv_values:
-            raise ValueError("No valid CPV data found in Hidden Hand")
+            raise ValueError("No valid CPV data found in StakeDAO analytics")
+        return statistics.mean(cpv_values)
 
-        median_cpv = statistics.median(cpv_values)
-        buffer_multiplier = Decimal(str(1 + buffer_pct))
+    def calculate_dynamic_min_incentive(
+        self, n_rounds: int = 2, buffer_pct: float = 0.5
+    ) -> int:
+        max_votes = self.get_aura_max_votes_from_snapshot(n_rounds)
+        avg_cpv = self.get_cpv_from_analytics(n_rounds)
 
-        raw = (
-            Decimal(str(max_votes))
-            * Decimal("0.005")
-            * buffer_multiplier
-            * Decimal(str(median_cpv))
+        web3 = Web3RpcByChain(os.getenv("DRPC_KEY"))["mainnet"]
+        aura_vebal_share = float(
+            self.subgraph.calculate_aura_vebal_share(web3, web3.eth.block_number)
         )
-        return Decimal(math.ceil(float(raw) / 10)) * 10
+
+        min_aura_portion = max_votes * 0.001 * (1 + buffer_pct) * avg_cpv
+        min_total_bribe = min_aura_portion / aura_vebal_share
+        return int(math.ceil(min_total_bribe / 10) * 10)

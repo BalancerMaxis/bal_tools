@@ -102,6 +102,27 @@ def _to_json(obj: str) -> str:
 
     obj = replace_arrow_functions(obj)
 
+    # 1b2) Handle async arrow functions with block bodies (no return type annotation)
+    def replace_async_block_functions(text):
+        pattern = r"async\s*\([^)]*\)\s*=>\s*\{"
+        while True:
+            match = re.search(pattern, text)
+            if not match:
+                break
+            start = match.start()
+            i = match.end() - 1
+            depth = 1
+            while i < len(text) - 1 and depth > 0:
+                i += 1
+                if text[i] == "{":
+                    depth += 1
+                elif text[i] == "}":
+                    depth -= 1
+            text = text[:start] + "null" + text[i + 1 :]
+        return text
+
+    obj = replace_async_block_functions(obj)
+
     # 1c) Handle $.xxx patterns (JSONPath expressions) by quoting them
     # This handles path values like $.apy or $.data
     obj = re.sub(r"(\$\.[a-zA-Z0-9_.]+)", r'"\1"', obj)
