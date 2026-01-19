@@ -1,9 +1,9 @@
-from decimal import Decimal
-from bal_tools.ecosystem import HiddenHand
+from bal_tools.ecosystem import StakeDAO
 
 
-def test_get_min_aura_incentive():
-    hh = HiddenHand()
-    result = hh.get_min_aura_incentive()
+def test_calculate_dynamic_min_incentive():
+    sd = StakeDAO()
+    result = sd.calculate_dynamic_min_incentive()
 
-    assert isinstance(result, Decimal)
+    assert isinstance(result, int)
+    assert result > 0
