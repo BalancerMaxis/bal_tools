@@ -240,9 +240,7 @@ class StakeDAO:
 
         web3 = Web3RpcByChain(os.getenv("DRPC_KEY"))["mainnet"]
         block = block_number if block_number else web3.eth.block_number
-        aura_vebal_share = float(
-            self.subgraph.calculate_aura_vebal_share(web3, block)
-        )
+        aura_vebal_share = float(self.subgraph.calculate_aura_vebal_share(web3, block))
 
         min_aura_portion = max_votes * 0.001 * (1 + buffer_pct) * avg_cpv
         min_total_bribe = min_aura_portion / aura_vebal_share
