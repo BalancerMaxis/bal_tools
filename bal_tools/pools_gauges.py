@@ -305,6 +305,7 @@ class BalPoolsGauges:
             "hyperevm": {},
             "optimism": {},
             "plasma": {},
+            "monad": {},
         }
 
         # summarise extended core pools dict into core_pools dict
