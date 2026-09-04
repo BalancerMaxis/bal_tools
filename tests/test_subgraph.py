@@ -4,7 +4,8 @@ import json
 import warnings
 import time
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
+from unittest.mock import patch
 
 from bal_tools.subgraph import Subgraph, GqlChain, Pool, PoolSnapshot
 from bal_tools.errors import NoPricesFoundError
@@ -231,16 +232,49 @@ def test_get_first_block_after_utc_timestamp_with_etherscan(
             raise
 
 
+def test_filter_outliers_and_average_drops_extreme_prices():
+    subgraph = Subgraph(silence_warnings=True)
+    prices = [Decimal("1.0")] * 20 + [Decimal("1000000")]
+    assert subgraph.filter_outliers_and_average(prices) < Decimal("10")
+
+
 def test_siusd_outlier_price_handling():
-    subgraph = Subgraph()
+    """
+    Ensure TWAP outlier filtering survives a relative window with a synthetic
+    extreme price spike (avoids hardcoded dates that age out of the past-year
+    API guard).
+    """
     siusd_address = "0xdbdc1ef57537e34680b898e1febd3d68c7389bcb"
+    now = datetime.now(timezone.utc)
+    start = int((now - timedelta(days=21)).timestamp())
+    end = int((now - timedelta(days=7)).timestamp())
+    day = 24 * 3600
 
-    # inclusive of corrupted timestamp at 1756807200
-    date_range = (1756684800, 1756944000)
+    prices = []
+    ts = start
+    while ts <= end:
+        prices.append({"timestamp": str(ts), "price": "1.0"})
+        ts += day
+    prices.append({"timestamp": str(start + 7 * day), "price": "1000000"})
 
-    result = subgraph.get_twap_price_token(
-        addresses=siusd_address, chain=GqlChain.MAINNET, date_range=date_range
-    )
+    def mock_fetch(self, subgraph, query, params=None, url=None):
+        assert query == "get_historical_token_prices"
+        return {
+            "tokenGetHistoricalPrices": [
+                {
+                    "address": siusd_address,
+                    "chain": "MAINNET",
+                    "prices": prices,
+                }
+            ]
+        }
+
+    with patch.object(Subgraph, "fetch_graphql_data", mock_fetch):
+        result = Subgraph(silence_warnings=True).get_twap_price_token(
+            addresses=siusd_address,
+            chain=GqlChain.MAINNET,
+            date_range=(start, end),
+        )
 
     assert result.twap_price < Decimal(
         "10"
